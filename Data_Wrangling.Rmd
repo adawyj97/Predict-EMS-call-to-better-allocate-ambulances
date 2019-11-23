@@ -113,3 +113,12 @@ vbCensus <-
   gather(Variable,Value, -GEOID, -geometry) 
 ```
 
+```{r}
+vbTracts <- 
+  vbCensus %>%
+  as.data.frame() %>%
+  distinct(GEOID, .keep_all = TRUE) %>%
+  select(GEOID, geometry) %>% 
+  st_sf()
+```
+
