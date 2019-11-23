@@ -85,6 +85,11 @@ EMS_calls <- st_read("https://data.vbgov.com/resource/2wub-c2dx.geojson") %>% st
 ```
 
 ```{r}
-hhhhhhhh
+EMS_calls2 <-
+  EMS_calls %>% 
+  mutate(interval60 = floor_date(ymd_hms(en_route_date_and_time), unit = "hour"),
+         interval15 = floor_date(ymd_hms(en_route_date_and_time), unit = "15 mins"),
+         week = week(interval60),
+         dotw = wday(interval60, label=TRUE))
 ```
 
