@@ -85,6 +85,10 @@ EMS_calls <- st_read("https://data.vbgov.com/resource/2wub-c2dx.geojson") %>% st
 ```
 
 ```{r}
+EMS_calls_csv <- read.csv("C:\\Users\\Xiaoran Wang\\Desktop\\MUSA507\\FinalProject\\EMS_Calls_For_Service.csv")
+```
+
+```{r}
 EMS_calls2 <-
   EMS_calls %>% 
   mutate(interval60 = floor_date(ymd_hms(en_route_date_and_time), unit = "hour"),
@@ -125,5 +129,9 @@ vbTracts <-
   distinct(GEOID, .keep_all = TRUE) %>%
   select(GEOID, geometry) %>% 
   st_sf()
+```
+
+```{r}
+
 ```
 
