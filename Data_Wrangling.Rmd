@@ -81,10 +81,16 @@ q5 <- function(variable) {as.factor(ntile(variable, 5))}
 ```
 
 ```{r}
-EMS.calls <- st_read("https://data.vbgov.com/resource/2wub-c2dx.geojson") %>% st_transform(2284)
+EMS_calls <- st_read("https://data.vbgov.com/resource/2wub-c2dx.geojson") %>% 
+  st_transform(2284)
 ```
 
 ```{r}
-
+EMS_calls2 <-
+  EMS_calls %>% 
+  mutate(interval60 = floor_date(ymd_hms(en_route_date_and_time), unit = "hour"),
+         interval15 = floor_date(ymd_hms(en_route_date_and_time), unit = "15 mins"),
+         week = week(interval60),
+         dotw = wday(interval60, label=TRUE))
 ```
 
