@@ -81,10 +81,10 @@ q5 <- function(variable) {as.factor(ntile(variable, 5))}
 ```
 
 ```{r}
-EMS.calls <- st_read("https://data.vbgov.com/resource/2wub-c2dx.geojson") %>% st_transform(2284)
+EMS_calls <- st_read("https://data.vbgov.com/resource/2wub-c2dx.geojson") %>% st_transform(2284)
 ```
 
 ```{r}
-
+hhhhhhhh
 ```
 
