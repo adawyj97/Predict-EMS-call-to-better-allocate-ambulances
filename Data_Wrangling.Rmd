@@ -89,7 +89,7 @@ boundary <- st_read('https://opendata.arcgis.com/datasets/759ad66064974eab9a556d
 
 ```{r}
 fishnet <- 
-  st_make_grid(boundary, cellsize = 1000) %>%
+  st_make_grid(boundary, cellsize = 5000) %>%
   st_sf()
 
 fishnet <- 
