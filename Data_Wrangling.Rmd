@@ -88,6 +88,24 @@ boundary <- st_read('https://opendata.arcgis.com/datasets/759ad66064974eab9a556d
 ```
 
 ```{r}
+fishnet <- 
+  st_make_grid(boundary, cellsize = 1000) %>%
+  st_sf()
+
+fishnet <- 
+  fishnet[boundary,] %>%
+  mutate(uniqueID = rownames(.)) %>%
+  dplyr::select(uniqueID)
+```
+
+```{r}
+ggplot() + 
+  geom_sf(data=fishnet) +
+  labs(title = "Virginia Beach fishnet") +
+  mapTheme()
+```
+
+```{r}
 Rescue_stations <- st_read('Data\\Rescue_stations.shp') %>%
    st_transform(2284)
 ```
