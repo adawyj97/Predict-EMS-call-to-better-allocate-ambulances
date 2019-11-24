@@ -106,8 +106,21 @@ ggplot() +
 ```
 
 ```{r}
-Rescue_stations <- st_read('Data\\Rescue_stations.shp') %>%
-   st_transform(2284)
+EMS_Call.template <- 
+  EMS_fishnet %>%
+  filter(week >= 22 & week <= 24 | week >= 25 & week <= 29)
+```
+
+```{r}
+length(unique(EMS_Call.template$interval60)) * length(unique(EMS_Call.template$uniqueID))
+```
+
+```{r}
+study.panel <- 
+  expand.grid(interval60 = unique(EMS_Call.template$interval60), 
+              uniqueID = unique(EMS_Call.template$uniqueID)) 
+
+nrow(study.panel)   
 ```
 
 ```{r}
@@ -138,6 +151,11 @@ EMS_calls2 <-
 EMS_fishnet <-
   EMS_calls2 %>% 
   st_join(fishnet, st_intersects)
+```
+
+```{r}
+Rescue_stations <- st_read('Data\\Rescue_stations.shp') %>%
+   st_transform(2284)
 ```
 
 ```{r}
