@@ -83,15 +83,17 @@ q5 <- function(variable) {as.factor(ntile(variable, 5))}
 
 ```{r}
 EMS_calls <- read.socrata("https://data.vbgov.com/Public-Safety/EMS-Calls-For-Service/2wub-c2dx") %>%
+  mutate(year = substr(call_date_and_time,1,4)) %>%
+  filter(year == "2017") %>%
   mutate(x = gsub("^.*\\(\\s*", "", location_1)) %>%
   mutate(x = gsub("[)]", "", x)) %>%
+  mutate(x = gsub("[a-zA-Z]", "", x)) %>%
   separate(x, c("Y","X"), sep=",") %>%
   mutate(X = as.numeric(X),
           Y = as.numeric(Y)) %>% 
    na.omit %>%
-   st_as_sf(coords = c("X", "Y"), crs = 4326, agr = "constant")%>%
-   st_transform(2284) %>% 
-   distinct()
+   st_as_sf(coords = c("X", "Y"), crs = 4326)%>%
+   st_transform(2284)
 ```
 
 ```{r}
