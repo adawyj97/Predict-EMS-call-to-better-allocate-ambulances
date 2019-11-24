@@ -273,16 +273,13 @@ as.data.frame(EMS_Call.panel) %>%
       geom_line() +
       plotTheme() +
       facet_wrap(~week, scales="free", ncol=3) +
-<<<<<<< HEAD
-      ylim(0,18000) +
-      labs(title="EMS calls in Virginia Beach by week: May through August, 2017",
-           subtitle="Thanksgiving and Christmas in blue", x="Day", y="Trip Counts") +
-      geom_vline(xintercept = as.POSIXct("2018-11-22 01:00:00 UTC"),color = "blue",size=1.1) +
-      geom_vline(xintercept = as.POSIXct("2018-12-24 01:00:00 UTC"),color = "blue",size=1.1) 
-=======
       ylim(0,20) +
       labs(title="EMS Calls in Virginia Beach by week: June to August, 2017",
             x="Day", y="Trip Counts") 
->>>>>>> d4f5b27b9b32297306776bb076938a8b5549ae87
+
+```
+
+```{r}
+
 ```
 
