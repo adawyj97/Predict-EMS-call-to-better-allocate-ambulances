@@ -210,7 +210,7 @@ vbTracts <-
 ```{r}
 EMS.template <- 
   EMS_fishnet %>%
-  filter(week >= 22 & week <= 24 | week >= 25 & week <= 29)
+  filter(week >= 22 & week <= 24 | week >= 25 & week <= 30)
 ```
 
 ```{r}
@@ -227,7 +227,7 @@ nrow(study.panel)
 
 ```{r}
 EMS_Call.panel <- 
-  EMS_Call.template %>%
+  EMS.template %>%
     mutate(Call_Counter = 1) %>%
     right_join(study.panel) %>% 
       group_by(interval60, uniqueID) %>%
@@ -255,8 +255,8 @@ EMS_Call.panel <-
 ```
 
 ```{r}
-EMS_Call.Train <- filter(EMS_Call.panel, week < 27)
-EMS_Call.Test <- filter(EMS_Call.panel, week >= 27)
+EMS_Call.Train <- filter(EMS_Call.panel, week < 28)
+EMS_Call.Test <- filter(EMS_Call.panel, week >= 28)
 ```
 
 ```{r, fig.width= 18, fig.height=4}
@@ -281,4 +281,16 @@ mondayMidnight <-
             geom_vline(data = mondayMidnight, aes(xintercept = mondayMidnight), colour="black")
 ```
 
+```{r}
+as.data.frame(EMS_Call.panel) %>%
+  group_by(week, interval60) %>% 
+  summarize(Call_Count = sum(Call_Count)) %>%
+    ggplot(aes(interval60,Call_Count)) + 
+      geom_line() +
+      plotTheme() +
+      facet_wrap(~week, scales="free", ncol=3) +
+      ylim(0,20) +
+      labs(title="EMS Calls in Virginia Beach by week: June to August, 2017",
+            x="Day", y="Trip Counts") 
+```
 
