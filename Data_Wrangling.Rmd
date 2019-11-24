@@ -221,6 +221,8 @@ EMS_Call.panel <-
             mutate(week = week(interval60),
                    dotw = wday(interval60, label = TRUE)) %>%
             st_sf()
+
+EMS_Call.panel$geometry <- NULL
 ```
 
 ```{r}
@@ -234,7 +236,32 @@ EMS_Call.panel <-
            lag12Hours = dplyr::lag(Call_Count,12),
            lag1day = dplyr::lag(Call_Count,24)) %>%
     mutate(day = yday(interval60)) 
+```
 
-EMS_Call.panel$geometry <- NULL
+```{r}
+EMS_Call.Train <- filter(EMS_Call.panel, week < 27)
+EMS_Call.Test <- filter(EMS_Call.panel, week >= 27)
+```
+
+```{r, fig.width= 18, fig.height=4}
+mondayMidnight <- 
+  EMS_Call.panel %>%
+  mutate(mondayMidnight = ifelse(wday(interval60) == 2 & hour(interval60) == 1,
+                                 as.POSIXct(interval60),0)) %>%
+  filter(mondayMidnight != 0) 
+
+  rbind(
+    mutate(EMS_Call.Train, label = "Training"), 
+    mutate(EMS_Call.Test, label = "Testing")) %>%
+      group_by(label, interval60) %>% 
+        summarize(Call_Count = sum(Call_Count)) %>%
+        ggplot(aes(interval60, Call_Count, colour = label)) + 
+          geom_line() +
+          ylim(0,20) +
+          labs(title="EMS calls in Virginia Beach by week: June through August, 2018",
+               subtitle="Monday demarked in black", x="Day", y="Call Counts") +
+          plotTheme() + theme(panel.grid.major = element_blank()) +   
+          scale_colour_manual(values = palette2) +
+            geom_vline(data = mondayMidnight, aes(xintercept = mondayMidnight), colour="black")
 ```
 
