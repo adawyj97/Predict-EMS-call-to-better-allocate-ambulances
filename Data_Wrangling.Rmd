@@ -126,10 +126,6 @@ EMS_calls <- read.socrata("https://data.vbgov.com/Public-Safety/EMS-Calls-For-Se
 ```
 
 ```{r}
-EMS_calls_csv <- read.csv("C:\\Users\\Xiaoran Wang\\Desktop\\MUSA507\\FinalProject\\EMS_Calls_For_Service.csv")
-```
-
-```{r}
 EMS_calls2 <-
   EMS_calls %>% 
   mutate(interval60 = floor_date(ymd_hms(en_route_date_and_time), unit = "hour"),
@@ -139,6 +135,7 @@ EMS_calls2 <-
 ```
 
 ```{r}
+# join EMS to fishnet
 EMS_fishnet <-
   EMS_calls2 %>% 
   st_join(fishnet, st_intersects)
@@ -178,11 +175,39 @@ vbTracts <-
   st_sf()
 ```
 
-<<<<<<< HEAD
+
 ```{r}
+EMS.template <- 
+  EMS_fishnet %>%
+  filter(week >= 22 & week <= 24 | week >= 25 & week <= 29)
 
 ```
-=======
 
->>>>>>> f92bcde9126cd3832df8fef585b13535de95bc83
+```{r}
+length(unique(EMS.template$interval60)) * length(unique(EMS.template$uniqueID))
+```
+
+```{r}
+study.panel <- 
+  expand.grid(interval60 = unique(EMS.template$interval60), 
+              uniqueID = unique(EMS.template$uniqueID)) 
+
+nrow(study.panel) 
+```
+
+```{r}
+weather.Panel <-  
+  weather.Data %>%
+    replace(is.na(.), 0) %>%
+    mutate(interval60 = ymd_h(substr(valid,1,13))) %>%
+    mutate(week = week(interval60),
+           dotw = wday(interval60, label=TRUE)) %>%
+    group_by(interval60) %>%
+    summarize(Temperature = max(tmpf),
+              Percipitation = sum(p01i),
+              Wind_Speed = max(sknt)) %>%
+    mutate(Temperature = ifelse(Temperature == 0, 42, Temperature))
+
+weather.Panel
+```
 
