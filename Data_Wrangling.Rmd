@@ -192,26 +192,26 @@ EMS_fishnet <-
 ```
 
 ```{r}
-EMS_Call.template <- 
+EMS.template <- 
   EMS_fishnet %>%
-  filter(week >= 22 & week <= 24 | week >= 25 & week <= 29)
+  filter(week >= 22 & week <= 24 | week >= 25 & week <= 30)
 ```
 
 ```{r}
-length(unique(EMS_Call.template$interval60)) * length(unique(EMS_Call.template$uniqueID))
+length(unique(EMS.template$interval60)) * length(unique(EMS.template$uniqueID))
 ```
 
 ```{r}
 study.panel <- 
-  expand.grid(interval60 = unique(EMS_Call.template$interval60), 
-              uniqueID = unique(EMS_Call.template$uniqueID)) 
+  expand.grid(interval60 = unique(EMS.template$interval60), 
+              uniqueID = unique(EMS.template$uniqueID)) 
 
 nrow(study.panel)   
 ```
 
 ```{r}
 EMS_Call.panel <- 
-  EMS_Call.template %>%
+  EMS.template %>%
     mutate(Call_Counter = 1) %>%
     right_join(study.panel) %>% 
       group_by(interval60, uniqueID) %>%
@@ -239,8 +239,8 @@ EMS_Call.panel <-
 ```
 
 ```{r}
-EMS_Call.Train <- filter(EMS_Call.panel, week < 27)
-EMS_Call.Test <- filter(EMS_Call.panel, week >= 27)
+EMS_Call.Train <- filter(EMS_Call.panel, week < 28)
+EMS_Call.Test <- filter(EMS_Call.panel, week >= 28)
 ```
 
 ```{r, fig.width= 18, fig.height=4}
@@ -263,5 +263,9 @@ mondayMidnight <-
           plotTheme() + theme(panel.grid.major = element_blank()) +   
           scale_colour_manual(values = palette2) +
             geom_vline(data = mondayMidnight, aes(xintercept = mondayMidnight), colour="black")
+```
+
+```{r}
+
 ```
 
