@@ -161,7 +161,7 @@ Rescue_stations <- st_read('Data\\Rescue_stations.shp') %>%
 
 ```{r}
 weather.Data <- 
-  riem_measures(station = "NTU", date_start = "2010-06-01", date_end = "2018-03-01")
+  riem_measures(station = "NTU", date_start = "2017-01-01", date_end = "2018-01-01")
 ```
 
 ```{r}
@@ -192,7 +192,6 @@ vbTracts <-
   select(GEOID, geometry) %>% 
   st_sf()
 ```
-
 
 ```{r}
 EMS.template <- 
@@ -227,5 +226,19 @@ weather.Panel <-
     mutate(Temperature = ifelse(Temperature == 0, 42, Temperature))
 
 weather.Panel
+```
+
+```{r}
+EMS.panel <- 
+  EMS.template %>%
+    mutate(Trip_Counter = 1) %>%
+    right_join(study.panel) %>% 
+      group_by(interval60, uniqueID) %>%
+      summarize(Trip_Count = sum(Trip_Counter, na.rm=T)) %>%
+      left_join(weather.Panel) %>%
+       ungroup() %>%                                 EMS
+        mutate(week = week(interval60),
+               dotw = wday(interval60, label = TRUE)) %>%
+  st_sf()
 ```
 
