@@ -105,23 +105,6 @@ ggplot() +
   mapTheme()
 ```
 
-```{r}
-EMS_Call.template <- 
-  EMS_fishnet %>%
-  filter(week >= 22 & week <= 24 | week >= 25 & week <= 29)
-```
-
-```{r}
-length(unique(EMS_Call.template$interval60)) * length(unique(EMS_Call.template$uniqueID))
-```
-
-```{r}
-study.panel <- 
-  expand.grid(interval60 = unique(EMS_Call.template$interval60), 
-              uniqueID = unique(EMS_Call.template$uniqueID)) 
-
-nrow(study.panel)   
-```
 
 ```{r}
 EMS_calls <- read.socrata("https://data.vbgov.com/Public-Safety/EMS-Calls-For-Service/2wub-c2dx") %>%
@@ -148,12 +131,6 @@ EMS_calls2 <-
 ```
 
 ```{r}
-EMS_fishnet <-
-  EMS_calls2 %>% 
-  st_join(fishnet, st_intersects)
-```
-
-```{r}
 Rescue_stations <- st_read('Data\\Rescue_stations.shp') %>%
    st_transform(2284)
 ```
@@ -161,8 +138,7 @@ Rescue_stations <- st_read('Data\\Rescue_stations.shp') %>%
 ```{r}
 weather.Data <- 
   riem_measures(station = "NTU", date_start = "2017-01-01", date_end = "2018-01-01")
-<<<<<<< HEAD
-=======
+
 ```
 
 ```{r}
@@ -177,7 +153,7 @@ weather.Panel <-
               Percipitation = sum(p01i),
               Wind_Speed = max(sknt)) %>%
     mutate(Temperature = ifelse(Temperature == 0, 42, Temperature))
->>>>>>> 3468c76717d3adf6d2f4de79539d700694949dd1
+
 ```
 
 ```{r}
@@ -210,21 +186,27 @@ vbTracts <-
 ```
 
 ```{r}
-EMS.template <- 
+EMS_fishnet <-
+  EMS_calls2 %>% 
+  st_join(fishnet, st_intersects)
+```
+
+```{r}
+EMS_Call.template <- 
   EMS_fishnet %>%
   filter(week >= 22 & week <= 24 | week >= 25 & week <= 29)
 ```
 
 ```{r}
-length(unique(EMS.template$interval60)) * length(unique(EMS.template$uniqueID))
+length(unique(EMS_Call.template$interval60)) * length(unique(EMS_Call.template$uniqueID))
 ```
 
 ```{r}
 study.panel <- 
-  expand.grid(interval60 = unique(EMS.template$interval60), 
-              uniqueID = unique(EMS.template$uniqueID)) 
+  expand.grid(interval60 = unique(EMS_Call.template$interval60), 
+              uniqueID = unique(EMS_Call.template$uniqueID)) 
 
-nrow(study.panel) 
+nrow(study.panel)   
 ```
 
 ```{r}
@@ -255,21 +237,4 @@ EMS_Call.panel <-
 
 EMS_Call.panel$geometry <- NULL
 ```
-
-<<<<<<< HEAD
-```{r}
-EMS.panel <- 
-  EMS.template %>%
-    mutate(Trip_Counter = 1) %>%
-    right_join(study.panel) %>% 
-      group_by(interval60, uniqueID) %>%
-      summarize(Trip_Count = sum(Trip_Counter, na.rm=T)) %>%
-      left_join(weather.Panel) %>%
-       ungroup() %>%                                 EMS
-        mutate(week = week(interval60),
-               dotw = wday(interval60, label = TRUE)) %>%
-  st_sf()
-```
-=======
->>>>>>> 3468c76717d3adf6d2f4de79539d700694949dd1
 
