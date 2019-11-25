@@ -294,12 +294,13 @@ as.data.frame(EMS_Call.panel) %>%
             x="Day", y="Trip Counts") 
 ```
 
-```{r}
+```{r, fig.width=15, fig.height=15}
 EMS_Call.panel %>% 
   group_by(week, uniqueID) %>%
   summarize(Sum_Call_Count = sum(Call_Count)) %>%
   ggplot() + geom_sf(aes(fill = Sum_Call_Count)) +
     facet_wrap(~week, ncol = 4) +
+    scale_fill_viridis() +
     labs(title="Sum of EMS calls by week") +
     mapTheme() + theme(legend.position = "bottom") 
 ```
