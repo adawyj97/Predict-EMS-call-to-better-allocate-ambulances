@@ -150,7 +150,8 @@ EMS_calls2 <-
 ```{r}
 EMS_fishnet <-
   EMS_calls2 %>% 
-  st_join(fishnet, st_intersects)
+  st_join(fishnet, st_intersects) %>% 
+  st_set_geometry(NULL)
 ```
 
 ```{r}
@@ -220,7 +221,7 @@ length(unique(EMS.template$interval60)) * length(unique(EMS.template$uniqueID))
 ```{r}
 study.panel <- 
   expand.grid(interval60 = unique(EMS.template$interval60), 
-              uniqueID = unique(EMS.template$uniqueID)) 
+              uniqueID = unique(fishnet$uniqueID)) 
 
 nrow(study.panel) 
 ```
@@ -233,12 +234,11 @@ EMS_Call.panel <-
       group_by(interval60, uniqueID) %>%
       summarize(Call_Count = sum(Call_Counter, na.rm=T)) %>%
       left_join(weather.Panel) %>%
+      left_join(fishnet, by=c("uniqueID")) %>%
             ungroup() %>%                                 
             mutate(week = week(interval60),
                    dotw = wday(interval60, label = TRUE)) %>%
             st_sf()
-
-EMS_Call.panel$geometry <- NULL
 ```
 
 ```{r}
@@ -292,5 +292,15 @@ as.data.frame(EMS_Call.panel) %>%
       ylim(0,20) +
       labs(title="EMS Calls in Virginia Beach by week: June to August, 2017",
             x="Day", y="Trip Counts") 
+```
+
+```{r}
+EMS_Call.panel %>% 
+  group_by(week, uniqueID) %>%
+  summarize(Sum_Call_Count = sum(Call_Count)) %>%
+  ggplot() + geom_sf(aes(fill = Sum_Call_Count)) +
+    facet_wrap(~week, ncol = 4) +
+    labs(title="Sum of EMS calls by week") +
+    mapTheme() + theme(legend.position = "bottom") 
 ```
 
