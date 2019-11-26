@@ -299,7 +299,7 @@ EMS_Call.panel %>%
   group_by(week, uniqueID) %>%
   summarize(Sum_Call_Count = sum(Call_Count)) %>%
   ggplot() + geom_sf(aes(fill = Sum_Call_Count)) +
-    facet_wrap(~week, ncol = 4) +
+    facet_wrap(~week, ncol = 3) +
     scale_fill_viridis() +
     labs(title="Sum of EMS calls by week") +
     mapTheme() + theme(legend.position = "bottom") 
@@ -337,5 +337,46 @@ as.data.frame(EMS_Call.panel) %>%
            subtitle="Mean call count by week; June through August, 2017",
            x="Temperature", y="Mean Call Count") +
       plotTheme() + theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```
+
+```{r}
+week26 <-
+  EMS_fishnet %>%
+  filter(week == 26 & dotw == "Mon")
+
+week26.panel <-
+  expand.grid(
+    interval15=unique(week26$interval15),
+    uniqueID = unique(fishnet$uniqueID))
+```
+
+```{r}
+EMS_Call.animation.data <-
+  week26 %>%
+    mutate(Call_Counter = 1) %>%
+    right_join(week26.panel) %>% 
+    group_by(interval15, uniqueID) %>%
+    summarize(Call_Count = sum(Call_Counter, na.rm=T)) %>% 
+    left_join(fishnet,by=c("uniqueID")) %>%
+    st_sf() %>%
+    mutate(Calls = case_when(Call_Count == 0 ~ "0 calls",
+                             Call_Count > 0 & Call_Count <= 5 ~ "1-5 calls",
+                             Call_Count > 5 & Call_Count <= 10 ~ "6-10 calls",
+                             Call_Count > 10 & Call_Count <= 20 ~ "11-20 calls",
+                             Call_Count > 20 ~ "21+ trips")) %>%
+           mutate(Calls  = factor(Calls, levels=c("0 calls","1-5 calls","6-10 calls","11-20 calls","21+ calls")))
+```
+
+```{r}
+EMS_Call_animation <-
+  ggplot() +
+  geom_sf(data=EMS_Call.animation.data, aes(fill=Calls)) +
+  scale_fill_manual(values = palette5) +
+  labs(title = "EMS Calls for one day in June 2018, Virginia Beach",
+       subtitle = "15 minute intervals: {current_frame}") +
+  transition_manual(interval15) +
+  mapTheme()
+
+animate(EMS_Call_animation, duration=20)
 ```
 
