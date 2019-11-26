@@ -324,7 +324,7 @@ week26 <-
 
 week26.panel <-
   expand.grid(
-    interval15=seq(floor_date(ymd_hms(min(week26$call_date_and_time)), unit = "15 mins"),floor_date(ymd_hms(max(EMS.template$call_date_and_time)), unit = "15 mins"), by = '15 mins'),
+    interval60=seq(floor_date(ymd_hms(min(week26$call_date_and_time)), unit = "60 mins"),floor_date(ymd_hms(max(week26$call_date_and_time)), unit = "60 mins"), by = '60 mins'),
     uniqueID = unique(fishnet$uniqueID))
 ```
 
@@ -333,7 +333,7 @@ EMS_Call.animation.data <-
   week26 %>%
     mutate(Call_Counter = 1) %>%
     right_join(week26.panel) %>% 
-    group_by(interval15, uniqueID) %>%
+    group_by(interval60, uniqueID) %>%
     summarize(Call_Count = sum(Call_Counter, na.rm=T)) %>% 
     left_join(fishnet,by=c("uniqueID")) %>%
     st_sf() %>%
@@ -351,8 +351,8 @@ EMS_Call_animation <-
   geom_sf(data=EMS_Call.animation.data, aes(fill=Calls)) +
   scale_fill_manual(values = palette5) +
   labs(title = "EMS Calls for one day in June 2018, Virginia Beach",
-       subtitle = "15 minute intervals: {current_frame}") +
-  transition_manual(interval15) +
+       subtitle = "60 minute intervals: {current_frame}") +
+  transition_manual(interval60) +
   mapTheme()
 
 animate(EMS_Call_animation, duration=20)
