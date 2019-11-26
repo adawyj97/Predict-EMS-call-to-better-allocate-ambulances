@@ -105,7 +105,6 @@ ggplot() +
   mapTheme()
 ```
 
-
 ```{r}
 EMS_calls <- read.socrata("https://data.vbgov.com/Public-Safety/EMS-Calls-For-Service/2wub-c2dx") %>%
   mutate(year = substr(call_date_and_time,1,4)) %>%
@@ -122,30 +121,8 @@ EMS_calls <- read.socrata("https://data.vbgov.com/Public-Safety/EMS-Calls-For-Se
 ```
 
 ```{r}
-EMS_calls2 <-
-  EMS_calls %>% 
-  mutate(interval60 = floor_date(ymd_hms(en_route_date_and_time), unit = "hour"),
-         interval15 = floor_date(ymd_hms(en_route_date_and_time), unit = "15 mins"),
-         week = week(interval60),
-         dotw = wday(interval60, label=TRUE))
-```
-
-```{r}
-EMS_fishnet <-
-  EMS_calls2 %>% 
-  st_join(fishnet, st_intersects) %>% 
-  st_set_geometry(NULL)
-```
-
-```{r}
-Rescue_stations <- st_read('Data\\Rescue_stations.shp') %>%
-   st_transform(2284)
-```
-
-```{r}
 weather.Data <- 
   riem_measures(station = "NTU", date_start = "2017-01-01", date_end = "2018-01-01")
-
 ```
 
 ```{r}
@@ -160,36 +137,22 @@ weather.Panel <-
               Percipitation = sum(p01i),
               Wind_Speed = max(sknt)) %>%
     mutate(Temperature = ifelse(Temperature == 0, 42, Temperature))
-
 ```
 
 ```{r}
-vbCensus <- 
-  get_acs(geography = "tract", variables = c("B01003_001", "B19013_001", "B02001_002", "B08013_001",                                                        "B08012_001", "B08301_001", "B08301_010"), 
-          year = 2017, state = "VA", geometry = TRUE, county=c("Virginia Beach")) %>%
-  mutate(variable = 
-          case_when(variable == "B01003_001" ~ "Total_Population",
-                    variable == "B19013_001" ~ "Median_Household_Income",
-                    variable == "B02001_002" ~ "Total_White_Population",
-                    variable == "B08013_001" ~ "Aggregate_Travel_Time_to_Work",
-                    variable == "B08012_001" ~ "Sex_of_Workers_by_Travel_Time_to_work",
-                    variable == "B08301_001" ~ "Means_of_Transportation_to_Work",
-                    variable == "B08301_010" ~ "Total_Public_Trans_excl_Taxi")) %>%
-  select(variable, estimate, GEOID, geometry) %>%
-  spread(variable,estimate) %>%
-  mutate(Percent_White = Total_White_Population / Total_Population,
-         Mean_Commute_Time_for_Workers = Aggregate_Travel_Time_to_Work / Sex_of_Workers_by_Travel_Time_to_work,
-         Percent_Taking_Public_Trans = Total_Public_Trans_excl_Taxi / Means_of_Transportation_to_Work) %>%
-  gather(Variable,Value, -GEOID, -geometry) 
+EMS_calls2 <-
+  EMS_calls %>% 
+  mutate(interval60 = floor_date(ymd_hms(call_date_and_time), unit = "hour"),
+         interval15 = floor_date(ymd_hms(call_date_and_time), unit = "15 mins"),
+         week = week(interval60),
+         dotw = wday(interval60, label=TRUE))
 ```
 
 ```{r}
-vbTracts <- 
-  vbCensus %>%
-  as.data.frame() %>%
-  distinct(GEOID, .keep_all = TRUE) %>%
-  select(GEOID, geometry) %>% 
-  st_sf()
+EMS_fishnet <-
+  EMS_calls2 %>% 
+  st_join(fishnet, st_intersects) %>% 
+  st_set_geometry(NULL)
 ```
 
 ```{r}
@@ -199,12 +162,8 @@ EMS.template <-
 ```
 
 ```{r}
-length(unique(EMS.template$interval60)) * length(unique(EMS.template$uniqueID))
-```
-
-```{r}
 study.panel <- 
-  expand.grid(interval60 = unique(EMS.template$interval60), 
+  expand.grid(interval60 = seq(floor_date(ymd_hms(min(EMS.template$call_date_and_time)), unit = "hour"),floor_date(ymd_hms(max(EMS.template$call_date_and_time)), unit = "hour"), by = '60 mins'), 
               uniqueID = unique(fishnet$uniqueID)) 
 
 nrow(study.panel)   
@@ -243,6 +202,40 @@ EMS_Call.Train <- filter(EMS_Call.panel, week < 28)
 EMS_Call.Test <- filter(EMS_Call.panel, week >= 28)
 ```
 
+```{r}
+Rescue_stations <- st_read('Data\\Rescue_stations.shp') %>%
+   st_transform(2284)
+```
+
+```{r}
+vbCensus <- 
+  get_acs(geography = "tract", variables = c("B01003_001", "B19013_001", "B02001_002", "B08013_001",                                                        "B08012_001", "B08301_001", "B08301_010"), 
+          year = 2017, state = "VA", geometry = TRUE, county=c("Virginia Beach")) %>%
+  mutate(variable = 
+          case_when(variable == "B01003_001" ~ "Total_Population",
+                    variable == "B19013_001" ~ "Median_Household_Income",
+                    variable == "B02001_002" ~ "Total_White_Population",
+                    variable == "B08013_001" ~ "Aggregate_Travel_Time_to_Work",
+                    variable == "B08012_001" ~ "Sex_of_Workers_by_Travel_Time_to_work",
+                    variable == "B08301_001" ~ "Means_of_Transportation_to_Work",
+                    variable == "B08301_010" ~ "Total_Public_Trans_excl_Taxi")) %>%
+  select(variable, estimate, GEOID, geometry) %>%
+  spread(variable,estimate) %>%
+  mutate(Percent_White = Total_White_Population / Total_Population,
+         Mean_Commute_Time_for_Workers = Aggregate_Travel_Time_to_Work / Sex_of_Workers_by_Travel_Time_to_work,
+         Percent_Taking_Public_Trans = Total_Public_Trans_excl_Taxi / Means_of_Transportation_to_Work) %>%
+  gather(Variable,Value, -GEOID, -geometry) 
+```
+
+```{r}
+vbTracts <- 
+  vbCensus %>%
+  as.data.frame() %>%
+  distinct(GEOID, .keep_all = TRUE) %>%
+  select(GEOID, geometry) %>% 
+  st_sf()
+```
+
 ```{r, fig.width= 18, fig.height=4}
 mondayMidnight <- 
   EMS_Call.panel %>%
@@ -276,7 +269,6 @@ as.data.frame(EMS_Call.panel) %>%
       ylim(0,20) +
       labs(title="EMS Calls in Virginia Beach by week: June to August, 2017",
             x="Day", y="Trip Counts") 
-
 ```
 
 ```{r, fig.width=15, fig.height=15}
@@ -336,20 +328,32 @@ week26.panel <-
 ```
 
 ```{r}
-EMS_calls.animation.data <-
+EMS_Call.animation.data <-
   week26 %>%
-    st_set_geometry(NULL)%>%
     mutate(Call_Counter = 1) %>%
     right_join(week26.panel) %>% 
-    group_by(interval15, uniqueID) %>%
+    group_by(interval60, uniqueID) %>%
     summarize(Call_Count = sum(Call_Counter, na.rm=T)) %>% 
     left_join(fishnet,by=c("uniqueID")) %>%
     st_sf() %>%
-    mutate(Trips = case_when(Call_Count == 0 ~ "0 trips",
-                             Call_Count > 0 & Call_Count <= 5 ~ "1-5 trips",
-                             Call_Count > 5 & Call_Count <= 10 ~ "6-10 trips",
-                             Call_Count > 10 & Call_Count <= 20 ~ "11-20 trips",
+    mutate(Calls = case_when(Call_Count == 0 ~ "0 calls",
+                             Call_Count > 0 & Call_Count <= 5 ~ "1-5 calls",
+                             Call_Count > 5 & Call_Count <= 10 ~ "6-10 calls",
+                             Call_Count > 10 & Call_Count <= 20 ~ "11-20 calls",
                              Call_Count > 20 ~ "21+ trips")) %>%
-           mutate(Trips  = factor(Trips, levels=c("0 trips","1-5 trips","6-10 trips","11-20 trips","21+ trips")))
+           mutate(Calls  = factor(Calls, levels=c("0 calls","1-5 calls","6-10 calls","11-20 calls","21+ calls")))
+```
+
+```{r}
+EMS_Call_animation <-
+  ggplot() +
+  geom_sf(data=EMS_Call.animation.data, aes(fill=Calls)) +
+  scale_fill_manual(values = palette5) +
+  labs(title = "EMS Calls for one day in June 2018, Virginia Beach",
+       subtitle = "60 minute intervals: {current_frame}") +
+  transition_manual(interval60) +
+  mapTheme()
+
+animate(EMS_Call_animation, duration=20)
 ```
 
