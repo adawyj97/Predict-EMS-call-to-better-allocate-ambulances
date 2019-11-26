@@ -131,8 +131,6 @@ EMS_calls2 <-
 ```
 
 ```{r}
-<<<<<<< HEAD
-=======
 EMS_fishnet <-
   EMS_calls2 %>% 
   st_join(fishnet, st_intersects) %>% 
@@ -140,7 +138,6 @@ EMS_fishnet <-
 ```
 
 ```{r}
->>>>>>> d23a0cbe1b0466baceefb536e39dc7cd013f3a75
 Rescue_stations <- st_read('Data\\Rescue_stations.shp') %>%
    st_transform(2284)
 ```
@@ -193,12 +190,6 @@ vbTracts <-
   distinct(GEOID, .keep_all = TRUE) %>%
   select(GEOID, geometry) %>% 
   st_sf()
-```
-
-```{r}
-EMS_fishnet <-
-  EMS_calls2 %>% 
-  st_join(fishnet, st_intersects)
 ```
 
 ```{r}
@@ -288,18 +279,31 @@ as.data.frame(EMS_Call.panel) %>%
 
 ```
 
-```{r}
-
-```
-
 ```{r, fig.width=15, fig.height=15}
 EMS_Call.panel %>% 
   group_by(week, uniqueID) %>%
   summarize(Sum_Call_Count = sum(Call_Count)) %>%
   ggplot() + geom_sf(aes(fill = Sum_Call_Count)) +
-    facet_wrap(~week, ncol = 4) +
+    facet_wrap(~week, ncol = 3) +
     scale_fill_viridis() +
     labs(title="Sum of EMS calls by week") +
     mapTheme() + theme(legend.position = "bottom") 
+```
+
+```{r}
+as.data.frame(EMS_Call.panel) %>%
+  group_by(interval60) %>% 
+  summarize(Call_Count = sum(Call_Count)) %>%
+  left_join(weather.Panel) %>%
+  mutate(isPercip = ifelse(Percipitation > 0,"Rain/Snow", "None")) %>%
+    group_by(week = week(interval60), isPercip) %>%
+      summarize(Mean_Call_Count = mean(Call_Count)) %>%
+    ggplot(aes(isPercip, Mean_Call_Count)) + 
+      geom_bar(stat = "identity") +
+      facet_wrap(~week,ncol=9) +
+      labs(title="Does ridership vary when it's raining or snowing?",
+           subtitle="Mean trip count by week; November through December, 2018",
+           x="Percipitation", y="Mean Trip Count") +
+      plotTheme() + theme(axis.text.x = element_text(angle = 45, hjust = 1))
 ```
 
