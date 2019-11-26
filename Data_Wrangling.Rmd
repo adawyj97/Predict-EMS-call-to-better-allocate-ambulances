@@ -82,7 +82,7 @@ q5 <- function(variable) {as.factor(ntile(variable, 5))}
 ```
 
 ```{r}
-boundary <- st_read('https://opendata.arcgis.com/datasets/759ad66064974eab9a556d3a90efa1a1_19.geojson') %>%
+boundary <- st_read('https://opendata.arcgis.com/datasets/82ada480c5344220b2788154955ce5f0_8.geojson') %>%
   st_set_crs(4326) %>%
    st_transform(2284)
 ```
