@@ -295,7 +295,7 @@ as.data.frame(EMS_Call.panel) %>%
   group_by(interval60) %>% 
   summarize(Call_Count = sum(Call_Count)) %>%
   left_join(weather.Panel) %>%
-  mutate(isPercip = ifelse(Percipitation > 0,"Rain/Snow", "None")) %>%
+  mutate(isPercip = ifelse(Percipitation > 0,"Rain", "None")) %>%
     group_by(week = week(interval60), isPercip) %>%
       summarize(Mean_Call_Count = mean(Call_Count)) %>%
     ggplot(aes(isPercip, Mean_Call_Count)) + 
@@ -305,5 +305,51 @@ as.data.frame(EMS_Call.panel) %>%
            subtitle="Mean trip count by week; November through December, 2018",
            x="Percipitation", y="Mean Trip Count") +
       plotTheme() + theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```
+
+```{r}
+as.data.frame(EMS_Call.panel) %>%
+  group_by(interval60) %>% 
+  summarize(Call_Count = sum(Call_Count)) %>%
+  left_join(weather.Panel) %>%
+  mutate(isHot = ifelse(Temperature > 86,"Hot", "None")) %>%
+    group_by(week = week(interval60), isHot) %>%
+      summarize(Mean_Call_Count = mean(Call_Count)) %>%
+    ggplot(aes(isHot, Mean_Call_Count)) + 
+      geom_bar(stat = "identity") +
+      facet_wrap(~week,ncol=9) +
+      labs(title="Does EMS Call vary when it's too hot?",
+           subtitle="Mean call count by week; June through August, 2017",
+           x="Temperature", y="Mean Call Count") +
+      plotTheme() + theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```
+
+```{r}
+week26 <-
+  EMS_fishnet %>%
+  filter(week == 26 & dotw == "Mon")
+
+week26.panel <-
+  expand.grid(
+    interval15=unique(week26$interval15),
+      unique(fishnet$uniqueID))
+```
+
+```{r}
+EMS_calls.animation.data <-
+  week26 %>%
+    st_set_geometry(NULL)%>%
+    mutate(Call_Counter = 1) %>%
+    right_join(week26.panel) %>% 
+    group_by(interval15, uniqueID) %>%
+    summarize(Call_Count = sum(Call_Counter, na.rm=T)) %>% 
+    left_join(fishnet,by=c("uniqueID")) %>%
+    st_sf() %>%
+    mutate(Trips = case_when(Call_Count == 0 ~ "0 trips",
+                             Call_Count > 0 & Call_Count <= 5 ~ "1-5 trips",
+                             Call_Count > 5 & Call_Count <= 10 ~ "6-10 trips",
+                             Call_Count > 10 & Call_Count <= 20 ~ "11-20 trips",
+                             Call_Count > 20 ~ "21+ trips")) %>%
+           mutate(Trips  = factor(Trips, levels=c("0 trips","1-5 trips","6-10 trips","11-20 trips","21+ trips")))
 ```
 
