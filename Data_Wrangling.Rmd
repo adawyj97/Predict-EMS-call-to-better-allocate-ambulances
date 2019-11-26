@@ -224,7 +224,8 @@ vbCensus <-
   mutate(Percent_White = Total_White_Population / Total_Population,
          Mean_Commute_Time_for_Workers = Aggregate_Travel_Time_to_Work / Sex_of_Workers_by_Travel_Time_to_work,
          Percent_Taking_Public_Trans = Total_Public_Trans_excl_Taxi / Means_of_Transportation_to_Work) %>%
-  gather(Variable,Value, -GEOID, -geometry) 
+  gather(Variable,Value, -GEOID, -geometry) %>%
+  st_transform(2284)
 ```
 
 ```{r}
@@ -355,5 +356,33 @@ EMS_Call_animation <-
   mapTheme()
 
 animate(EMS_Call_animation, duration=20)
+```
+
+```{r}
+fishnet_centroid <- 
+  st_centroid(fishnet)%>% 
+  rename(
+    centroid = geometry)
+```
+
+```{r}
+ggplot() + 
+  geom_sf(data=fishnet) +
+  geom_sf(data=fishnet_centroid) +
+  labs(title = "Virginia Beach fishnet centroid") +
+  mapTheme()
+```
+
+```{r}
+census_fishnet <- 
+  fishnet_centroid %>% 
+  st_join(vbCensus, st_intersects) %>% 
+  st_set_geometry(NULL)
+```
+
+```{r}
+EMS_Call_final <- 
+  EMS_Call.panel %>%
+  left_join(census_fishnet, by=c("uniqueID"))
 ```
 
