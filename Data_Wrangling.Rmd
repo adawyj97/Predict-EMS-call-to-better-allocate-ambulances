@@ -337,11 +337,11 @@ EMS_Call.animation.data <-
     left_join(fishnet,by=c("uniqueID")) %>%
     st_sf() %>%
     mutate(Calls = case_when(Call_Count == 0 ~ "0 calls",
-                             Call_Count > 0 & Call_Count <= 5 ~ "1-5 calls",
-                             Call_Count > 5 & Call_Count <= 10 ~ "6-10 calls",
-                             Call_Count > 10 & Call_Count <= 20 ~ "11-20 calls",
-                             Call_Count > 20 ~ "21+ trips")) %>%
-           mutate(Calls  = factor(Calls, levels=c("0 calls","1-5 calls","6-10 calls","11-20 calls","21+ calls")))
+                             Call_Count > 0 & Call_Count <= 1 ~ "1 call",
+                             Call_Count > 1 & Call_Count <= 3 ~ "2-3 calls",
+                             Call_Count > 3 & Call_Count <= 5 ~ "4-5 calls",
+                             Call_Count > 5 ~ "5+ calls")) %>%
+           mutate(Calls  = factor(Calls, levels=c("0 calls","1 call","2-3 calls","4-5 calls","5+ calls")))
 ```
 
 ```{r}
