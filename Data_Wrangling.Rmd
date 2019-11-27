@@ -235,7 +235,7 @@ vbTracts <-
   as.data.frame() %>%
   distinct(GEOID, .keep_all = TRUE) %>%
   select(GEOID, geometry) %>% 
-  st_sf()1
+  st_sf()
 ```
 
 ```{r, fig.width= 18, fig.height=4}
