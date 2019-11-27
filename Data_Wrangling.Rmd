@@ -10,6 +10,7 @@ knitr::opts_chunk$set(echo = TRUE)
 ```
 
 ```{r}
+library(tidyr)
 library(tidyverse)
 library(sf)
 library(RSocrata)
@@ -381,8 +382,56 @@ census_fishnet <-
 ```
 
 ```{r}
-EMS_Call_final <- 
-  EMS_Call.panel %>%
-  left_join(census_fishnet, by=c("uniqueID"))
+plotData.census <- 
+  as.data.frame(EMS_Call.panel) %>%
+    filter(week == 26) %>%
+  group_by(uniqueID) %>% 
+  summarize(Call_Count = sum(Call_Count))  %>%
+    left_join(census_fishnet, by=c("uniqueID")) %>%
+    filter(Variable == "Median_Household_Income" | Variable == "Mean_Commute_Time_for_Workers" |
+           Variable == "Percent_Taking_Public_Trans" | Variable == "Percent_White") 
+
+```
+
+```{r}
+correlation.census <-
+  plotData.census %>%
+  group_by(Variable) %>%  
+  summarize(correlation = round(cor(Value, Call_Count),2))
+  
+correlation.census
+```
+
+```{r}
+ggplot(plotData.census, aes(Value,Call_Count)) + geom_point() + geom_smooth(method="lm", se = F) +
+  facet_wrap(~Variable, scales="free", ncol=2) +
+  geom_text(data=correlation.census, aes(label=paste("R =", correlation)),
+            colour = "blue", x=-Inf, y=Inf, hjust=-0.1, vjust=1.2) +
+  plotTheme() +
+  labs(title="One week of EMS Calls by Census Tract\nas a function of selected Census variables")
+```
+
+```{r, fig.width=15}
+as.data.frame(EMS_Call.panel) %>%
+  group_by(uniqueID) %>% 
+  summarize(Call_Count = sum(Call_Count)) %>%
+ggplot(aes(Call_Count)) + 
+  geom_histogram(binwidth = 1) +
+  labs(title = "Distribution of EMS Calls by grid cell")
+```
+```{r}
+vbCensus_wide <- spread(vbCensus, Variable, Value)
+```
+
+```{r}
+census_fishnet_wide <- 
+  fishnet_centroid %>% 
+  st_join(vbCensus_wide, st_intersects) %>% 
+  st_set_geometry(NULL)
+```
+
+```{r}
+EMS_Call_final <- EMS_Call.panel %>%
+  left_join(census_fishnet_wide, by = c("uniqueID"))
 ```
 
