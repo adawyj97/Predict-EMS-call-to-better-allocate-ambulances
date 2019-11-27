@@ -295,9 +295,9 @@ as.data.frame(EMS_Call.panel) %>%
     ggplot(aes(isPercip, Mean_Call_Count)) + 
       geom_bar(stat = "identity") +
       facet_wrap(~week,ncol=9) +
-      labs(title="Does ridership vary when it's raining or snowing?",
-           subtitle="Mean trip count by week; November through December, 2018",
-           x="Percipitation", y="Mean Trip Count") +
+      labs(title="Does EMS Calls vary when it's raining?",
+           subtitle="Mean call count by week; June through August, 2017",
+           x="Percipitation", y="Mean Call Count") +
       plotTheme() + theme(axis.text.x = element_text(angle = 45, hjust = 1))
 ```
 
