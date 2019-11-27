@@ -199,11 +199,6 @@ EMS_Call.panel <-
 ```
 
 ```{r}
-EMS_Call.Train <- filter(EMS_Call.panel, week < 28)
-EMS_Call.Test <- filter(EMS_Call.panel, week >= 28)
-```
-
-```{r}
 Rescue_stations <- st_read('Data\\Rescue_stations.shp') %>%
    st_transform(2284)
 ```
@@ -433,5 +428,16 @@ census_fishnet_wide <-
 ```{r}
 EMS_Call_final <- EMS_Call.panel %>%
   left_join(census_fishnet_wide, by = c("uniqueID"))
+```
+
+```{r}
+EMS_Call.Train <- filter(EMS_Call_final, week < 28)
+EMS_Call.Test <- filter(EMS_Call_final, week >= 28)
+```
+
+```{r}
+regression <-
+    glm(Call_Count ~ hour(interval60) + dotw + Temperature, family = "poisson", 
+      data = EMS_Call.Train)
 ```
 
