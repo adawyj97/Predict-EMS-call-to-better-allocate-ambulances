@@ -354,7 +354,7 @@ animate(EMS_Call_animation, duration=24)
 ```
 
 ```{r}
-anim_save("EMS Calls Virginia Beach", EMS_Call_animation, duration=24)
+anim_save("EMS Calls Virginia Beach.gif", EMS_Call_animation, duration=24)
 ```
 
 ```{r}
