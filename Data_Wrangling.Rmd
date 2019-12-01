@@ -319,9 +319,8 @@ week26 <-
   filter(week == 26 & dotw == "Mon")
 
 week26.panel <-
-  expand.grid(
-    interval15=unique(week26$interval15),
-      unique(fishnet$uniqueID))
+   expand.grid(interval60 = seq(floor_date(ymd_hms(min(week26$call_date_and_time)), unit = "hour"),floor_date(ymd_hms(max(week26$call_date_and_time)), unit = "hour"), by = '60 mins'), 
+              uniqueID = unique(fishnet$uniqueID)) 
 ```
 
 ```{r}
@@ -351,7 +350,7 @@ EMS_Call_animation <-
   transition_manual(interval60) +
   mapTheme()
 
-animate(EMS_Call_animation, duration=20)
+animate(EMS_Call_animation, duration=24)
 ```
 
 ```{r}
