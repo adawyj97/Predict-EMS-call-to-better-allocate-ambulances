@@ -354,6 +354,10 @@ animate(EMS_Call_animation, duration=24)
 ```
 
 ```{r}
+anim_save("EMS Calls Virginia Beach", EMS_Call_animation, duration=24)
+```
+
+```{r}
 fishnet_centroid <- 
   st_centroid(fishnet)%>% 
   rename(
