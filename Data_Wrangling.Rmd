@@ -268,6 +268,36 @@ as.data.frame(EMS_Call.panel) %>%
             x="Day", y="Trip Counts") 
 ```
 
+```{r}
+plotData.lag <-
+  as.data.frame(EMS_Call.panel) %>%
+  filter(week == 26) %>%
+  group_by(interval60) %>% 
+    summarise_at(vars(starts_with("lag"), "Call_Count"), mean, na.rm = TRUE) %>%
+    gather(Variable, Value, -interval60, -Call_Count) %>%
+    mutate(Variable = factor(Variable, levels=c("lagHour","lag2Hours","lag3Hours","lag4Hours",
+                                                "lag12Hours","lag1day")))
+
+correlation.lag <-
+  plotData.lag %>%
+  group_by(Variable) %>%  
+  summarize(correlation = round(cor(Value, Call_Count),2))
+  
+correlation.lag
+```
+
+```{r}
+plotData.lag %>%
+  ggplot(aes(Value, Call_Count)) + 
+    geom_point() + geom_smooth(method = "lm", se = F) + 
+    facet_wrap(~Variable) +
+    geom_text(data=correlation.lag, aes(label=paste("R =", correlation)),colour = "blue", 
+              x=-Inf, y=Inf, hjust=-0.1, vjust=1.2) +
+    labs(title = "EMS call count as a function of time lags", 
+         subtitle= "One week in June, 2017", x = "Lag Call Count") +
+    plotTheme()
+```
+
 ```{r, fig.width=15, fig.height=15}
 EMS_Call.panel %>% 
   group_by(week, uniqueID) %>%
