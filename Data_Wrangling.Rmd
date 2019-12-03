@@ -462,6 +462,7 @@ ggplot(aes(Call_Count)) +
   geom_histogram(binwidth = 1) +
   labs(title = "Distribution of EMS Calls by grid cell")
 ```
+
 ```{r}
 vbCensus_wide <- spread(vbCensus, Variable, Value)
 ```
@@ -476,85 +477,5 @@ census_fishnet_wide <-
 ```{r}
 EMS_Call_final <- EMS_Call.panel %>%
   left_join(census_fishnet_wide, by = c("uniqueID"))
-```
-
-```{r}
-EMS_Call.Train <- filter(EMS_Call_final, week < 28)
-EMS_Call.Test <- filter(EMS_Call_final, week >= 28)
-```
-
-```{r}
-regression1 <-
-    glm(Call_Count ~ hour(interval60) + dotw + Temperature, family = "poisson", 
-      data = EMS_Call.Train)
-```
-
-```{r}
-regression2 <- 
-  glm(Call_Count ~  GEOID + dotw + Temperature, family = "poisson", data = EMS_Call.Train)
-```
-
-```{r}
-regression3 <- 
-  glm(Call_Count ~  GEOID + hour(interval60) + dotw + Temperature, 
-     family = "poisson", data = EMS_Call.Train)
-```
-
-```{r}
-regression4 <- 
-  glm(Call_Count ~  GEOID +  hour(interval60) + dotw + Temperature +
-                   lagHour + lag2Hours +lag3Hours + lag12Hours + lag1day, 
-     family = "poisson",
-     data = EMS_Call.Train)
-```
-
-```{r}
-regression5 <- 
-  glm(Call_Count ~  GEOID + hour(interval60) + dotw + Temperature + Percipitation +
-                   lagHour + lag2Hours +lag3Hours +lag12Hours + lag1day,
-     family = "poisson",
-     data = EMS_Call.Train)
-```
-
-```{r}
-EMS_Call.Test.weekNest <- 
-  EMS_Call.Test %>%
-  nest(-week) 
-
-EMS_Call.Test.weekNest
-```
-```{r}
-model_pred <- function(dat, fit){
-   pred <- predict(fit, newdata = dat)}
-```
-
-```{r}
-week_predictions <- 
-  EMS_Call.Test.weekNest %>% 
-    mutate(A_Time_FE = map(.x = data, fit = regression1, .f = model_pred),
-           B_Space_FE = map(.x = data, fit = regression2, .f = model_pred),
-           C_Time_Space_FE = map(.x = data, fit = regression3, .f = model_pred),
-           D_Time_Space_FE_timeLags = map(.x = data, fit = regression4, .f = model_pred),
-           E_Time_Space_FE_timeLags_holidayLags = map(.x = data, fit = regression5, .f = model_pred))
-
-week_predictions 
-```
-
-```{r}
-week_predictions <-
-  week_predictions %>% 
-    gather(Regression, Prediction, -data, -week) %>%
-    mutate(Observed = map(data, pull, Call_Count),
-           Absolute_Error = map2(Observed, Prediction,  ~ abs(.x - .y)),
-           MAE = map_dbl(Absolute_Error, mean),
-           sd_AE = map_dbl(Absolute_Error, sd))
-
-week_predictions 
-```
-
-```{r}
-EMS_Call.Test.weekNest %>%
-  mutate(Call_Count = map(data, pull, Call_Count),
-         Mean_Call_Count = map_dbl(Call_Count, mean))
 ```
 
