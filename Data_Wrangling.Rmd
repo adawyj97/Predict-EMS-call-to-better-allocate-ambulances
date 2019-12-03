@@ -331,6 +331,20 @@ as.data.frame(EMS_Call.panel) %>%
   group_by(interval60) %>% 
   summarize(Call_Count = sum(Call_Count)) %>%
   left_join(weather.Panel) %>%
+    mutate(week = week(interval60)) %>%
+  ggplot(aes(Temperature, Call_Count)) + 
+    geom_point() + facet_wrap(~week) + geom_smooth(method = "lm", se= FALSE) +
+    plotTheme() +
+  labs(title="Call Count as a fuction of Temperature by week",
+           subtitle="Call count by week; June through August, 2017",
+           x="Temperature", y="Call Trip Count")
+```
+
+```{r}
+as.data.frame(EMS_Call.panel) %>%
+  group_by(interval60) %>% 
+  summarize(Call_Count = sum(Call_Count)) %>%
+  left_join(weather.Panel) %>%
   mutate(isHot = ifelse(Temperature > 86,"Hot", "None")) %>%
     group_by(week = week(interval60), isHot) %>%
       summarize(Mean_Call_Count = mean(Call_Count)) %>%
