@@ -456,12 +456,13 @@ vbCensus_wide <- spread(vbCensus, Variable, Value)
 census_fishnet_wide <- 
   fishnet %>% 
   st_join(vbCensus_wide[-c(2:12)], st_intersects, largest = TRUE) %>% 
-  left_join(st_set_geometry(vbCensus, NULL), by=c('GEOID')) %>% 
+  left_join(st_set_geometry(vbCensus_wide, NULL), by=c('GEOID')) %>% 
   st_set_geometry(NULL)
 ```
 
 ```{r}
 EMS_Call_final <- EMS_Call.panel %>%
   left_join(census_fishnet_wide, by = c("uniqueID"))
+EMS_Call_final <- EMS_Call_final[is.na(EMS_Call_final$GEOID) != TRUE,]
 ```
 
