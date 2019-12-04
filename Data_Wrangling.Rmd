@@ -402,25 +402,10 @@ anim_save("EMS Calls Virginia Beach.gif", EMS_Call_animation, duration=24)
 ```
 
 ```{r}
-fishnet_centroid <- 
-  st_centroid(fishnet)%>% 
-  rename(
-    centroid = geometry)
-```
-
-```{r}
-ggplot() + 
-  geom_sf(data=fishnet) +
-  geom_sf(data=vbCensus) +
-  geom_sf(data=fishnet_centroid) +
-  labs(title = "Virginia Beach fishnet centroid") +
-  mapTheme()
-```
-
-```{r}
 census_fishnet <- 
-  fishnet_centroid %>% 
-  st_join(vbCensus, st_intersects) %>% 
+  fishnet %>% 
+  st_join(vbCensus[-c(2,3)], st_intersects, largest=TRUE) %>% 
+  left_join(st_set_geometry(vbCensus, NULL), by=c('GEOID')) %>% 
   st_set_geometry(NULL)
 ```
 
@@ -469,8 +454,9 @@ vbCensus_wide <- spread(vbCensus, Variable, Value)
 
 ```{r}
 census_fishnet_wide <- 
-  fishnet_centroid %>% 
-  st_join(vbCensus_wide, st_intersects) %>% 
+  fishnet %>% 
+  st_join(vbCensus_wide[-c(2:12)], st_intersects, largest = TRUE) %>% 
+  left_join(st_set_geometry(vbCensus, NULL), by=c('GEOID')) %>% 
   st_set_geometry(NULL)
 ```
 
