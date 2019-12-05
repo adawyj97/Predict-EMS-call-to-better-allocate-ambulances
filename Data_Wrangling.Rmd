@@ -204,9 +204,14 @@ Rescue_stations <- st_read('Data\\Rescue_stations.shp') %>%
 ```
 
 ```{r}
+Neighborhoods <- st_read('https://data.opendatasoft.com/explore/dataset/zillow-neighborhoods@public/download/?format=geojson&refine.state=VA&refine.county=Virginia+Beach+City&timezone=America/New_York')  %>%
+   st_transform(2284)
+```
+
+```{r}
 vbCensus <- 
   get_acs(geography = "tract", variables = c("B01003_001", "B19013_001", "B02001_002", "B08013_001",                                                        "B08012_001", "B08301_001", "B08301_010", "B11007_001", 
-                                        "	B12001_003", "B12001_007", "B12001_009", "B12001_010"), 
+                                        "B12001_003", "B12001_007", "B12001_009", "B12001_010"), 
           year = 2017, state = "VA", geometry = TRUE, county=c("Virginia Beach")) %>%
   mutate(variable = 
           case_when(variable == "B01003_001" ~ "Total_Population",
