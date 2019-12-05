@@ -205,7 +205,8 @@ Rescue_stations <- st_read('Data\\Rescue_stations.shp') %>%
 
 ```{r}
 vbCensus <- 
-  get_acs(geography = "tract", variables = c("B01003_001", "B19013_001", "B02001_002", "B08013_001",                                                        "B08012_001", "B08301_001", "B08301_010"), 
+  get_acs(geography = "tract", variables = c("B01003_001", "B19013_001", "B02001_002", "B08013_001",                                                        "B08012_001", "B08301_001", "B08301_010", "B11007_001", 
+                                        "	B12001_003", "B12001_007", "B12001_009", "B12001_010"), 
           year = 2017, state = "VA", geometry = TRUE, county=c("Virginia Beach")) %>%
   mutate(variable = 
           case_when(variable == "B01003_001" ~ "Total_Population",
@@ -214,14 +215,25 @@ vbCensus <-
                     variable == "B08013_001" ~ "Aggregate_Travel_Time_to_Work",
                     variable == "B08012_001" ~ "Sex_of_Workers_by_Travel_Time_to_work",
                     variable == "B08301_001" ~ "Means_of_Transportation_to_Work",
-                    variable == "B08301_010" ~ "Total_Public_Trans_excl_Taxi")) %>%
+                    variable == "B08301_010" ~ "Total_Public_Trans_excl_Taxi",
+                    variable == "B11007_001" ~ "Total_Households_with_65yrs_and_Over",
+                    variable == "B12001_003" ~ "Never_Married_Male",
+                    variable == "B12001_007" ~ "Spouse_Absent_Male", 
+                    variable == "B12001_009" ~ "Widowed_Male",
+                    variable == "B12001_010" ~ "Divorced_Male")) %>%
   select(variable, estimate, GEOID, geometry) %>%
   spread(variable,estimate) %>%
   mutate(Percent_White = Total_White_Population / Total_Population,
          Mean_Commute_Time_for_Workers = Aggregate_Travel_Time_to_Work / Sex_of_Workers_by_Travel_Time_to_work,
-         Percent_Taking_Public_Trans = Total_Public_Trans_excl_Taxi / Means_of_Transportation_to_Work) %>%
+         Percent_Taking_Public_Trans = Total_Public_Trans_excl_Taxi / Means_of_Transportation_to_Work,
+         Percent_Single_Male = (Never_Married_Male + Spouse_Absent_Male + Widowed_Male + Divorced_Male)/Total_Population) %>%
   gather(Variable,Value, -GEOID, -geometry) %>%
   st_transform(2284)
+```
+
+```{r}
+census_search <- load_variables(2017, "acs5", cache = TRUE)
+View(census_search)
 ```
 
 ```{r}
