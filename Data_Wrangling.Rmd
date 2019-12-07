@@ -120,6 +120,28 @@ fishnet <- fishnet %>%
   st_join(Daytimepop[c('DPOP_CY')], st_intersects, largest = TRUE)
 ```
 
+
+```{r}
+accident <- st_read("https://opendata.arcgis.com/datasets/1c7c9f723d5947c19c0fc34aaa30ff2a_0.geojson?where=Crash_Severity%20like%20'%25A.Severe%20Injury%25'%20AND%20VDOT_District%20like%20'%255.Hampton%20Roads%25'%20AND%20Crash_Year%20%3E%3D%202017%20AND%20Crash_Year%20%3C%3D%202017") %>%
+   st_transform(2284)
+```
+
+```{r}
+accident_net <- 
+  accident %>% 
+  dplyr::select() %>% 
+  mutate(countAccident = 1) %>% 
+  aggregate(., fishnet, sum) %>%
+  mutate(countAccident = ifelse(is.na(countAccident), 0, countAccident),
+         uniqueID = rownames(.))
+```
+
+```{r}
+ggplot() +
+  geom_sf(data=accident_net, aes(fill = countAccident)) +
+  mapTheme()
+```
+
 ```{r}
 EMS_calls <- read.socrata("https://data.vbgov.com/Public-Safety/EMS-Calls-For-Service/2wub-c2dx") %>%
   mutate(year = substr(call_date_and_time,1,4)) %>%
@@ -134,7 +156,6 @@ EMS_calls <- read.socrata("https://data.vbgov.com/Public-Safety/EMS-Calls-For-Se
    st_as_sf(coords = c("X", "Y"), crs = 4326) %>%
    st_transform(2284)
 ```
-
 
 ```{r}
 vbCensus <- 
@@ -279,8 +300,6 @@ View(census_search)
 ```
 
 ```{r}
-=======
->>>>>>> af093fef032851fa87c5f7c4164e744fca96d19d
 vbTracts <- 
   vbCensus %>%
   as.data.frame() %>%
@@ -544,27 +563,5 @@ EMS_Call_final <- EMS_Call.panel %>%
 EMS_Call_final <- EMS_Call_final[is.na(EMS_Call_final$GEOID) != TRUE,] 
 EMS_Call_final <- EMS_Call_final[is.na(EMS_Call_final$name) != TRUE,]
 EMS_Call_final <- EMS_Call_final[is.na(EMS_Call_final$DPOP_CY) != TRUE,]
-```
-
-```{r}
-accident <- st_read("https://opendata.arcgis.com/datasets/1c7c9f723d5947c19c0fc34aaa30ff2a_0.geojson?where=Crash_Severity%20like%20'%25A.Severe%20Injury%25'%20AND%20VDOT_District%20like%20'%255.Hampton%20Roads%25'%20AND%20Crash_Year%20%3E%3D%202017%20AND%20Crash_Year%20%3C%3D%202017") %>%
-   st_transform(2284)
-```
-
-```{r}
-accident_net <- 
-  accident %>% 
-  dplyr::select() %>% 
-  mutate(countAccident = 1) %>% 
-  aggregate(., fishnet, sum) %>%
-  mutate(countAccident = ifelse(is.na(countAccident), 0, countAccident),
-         uniqueID = rownames(.))
-```
-
-
-```{r}
-ggplot() +
-  geom_sf(data=accident_net, aes(fill = countAccident)) +
-  mapTheme()
 ```
 
