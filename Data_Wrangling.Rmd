@@ -241,7 +241,6 @@ EMS_Call.panel <-
 ```
 
 ```{r}
-<<<<<<< HEAD
 Rescue_stations <- st_read('Data\\Rescue_stations.shp') %>%
    st_transform(2284)
 ```
@@ -522,4 +521,25 @@ EMS_Call_final <- EMS_Call_final[is.na(EMS_Call_final$GEOID) != TRUE,]
 EMS_Call_final <- EMS_Call_final[is.na(EMS_Call_final$name) != TRUE,] 
 ```
 
+```{r}
+accident <- st_read("https://opendata.arcgis.com/datasets/1c7c9f723d5947c19c0fc34aaa30ff2a_0.geojson?where=Crash_Severity%20like%20'%25A.Severe%20Injury%25'%20AND%20VDOT_District%20like%20'%255.Hampton%20Roads%25'%20AND%20Crash_Year%20%3E%3D%202017%20AND%20Crash_Year%20%3C%3D%202017") %>%
+   st_transform(2284)
+```
+
+```{r}
+accident_net <- 
+  accident %>% 
+  dplyr::select() %>% 
+  mutate(countAccident = 1) %>% 
+  aggregate(., fishnet, sum) %>%
+  mutate(countAccident = ifelse(is.na(countAccident), 0, countAccident),
+         uniqueID = rownames(.))
+```
+
+
+```{r}
+ggplot() +
+  geom_sf(data=accident_net, aes(fill = countAccident)) +
+  mapTheme()
+```
 
