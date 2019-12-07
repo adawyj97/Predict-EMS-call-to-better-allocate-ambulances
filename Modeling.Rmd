@@ -89,11 +89,8 @@ EMS_Call.Test <- filter(EMS_Call_final, week >= 28)
 ```
 
 ```{r}
-# regression1 <-
-#     glm(Call_Count ~ hour(interval60) + name + Median_Household_Income, family = "poisson", 
-#       data = EMS_Call.Train)
 regression1 <- 
-  zeroinfl(Call_Count ~ hour(interval60) + name | 1, data = EMS_Call.Train)
+  zeroinfl(Call_Count ~ hour(interval60) + name + lagHour + lag12Hours| 1, data = EMS_Call.Train)
 ```
 
 ```{r}

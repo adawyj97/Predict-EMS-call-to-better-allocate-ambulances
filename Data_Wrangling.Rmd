@@ -89,7 +89,7 @@ boundary <- st_read('https://opendata.arcgis.com/datasets/82ada480c5344220b27881
 ```
 
 ```{r}
-Rescue_stations <- st_read('Data\\Rescue_stations.shp') %>%
+Daytimepop <- st_read('Data\\Daytimepop.shp') %>%
    st_transform(2284)
 ```
 
@@ -117,14 +117,7 @@ fishnet <- fishnet %>%
   st_join(Neighborhoods[2], st_intersects, largest = TRUE)
 
 fishnet <- fishnet %>%
-  st_join(Zoning[2], st_intersects, largest = TRUE)
-```
-
-```{r}
-ggplot() + 
-  geom_sf(data=fishnet) +
-  labs(title = "Virginia Beach fishnet") +
-  mapTheme()
+  st_join(Daytimepop[c('DPOP_CY')], st_intersects, largest = TRUE)
 ```
 
 ```{r}
@@ -323,6 +316,29 @@ plotData.lag %>%
 ```
 
 ```{r, fig.width=15, fig.height=15}
+EMS_Call.panel %>%
+  mutate(hour = hour(interval60)) %>%
+  group_by(hour, uniqueID) %>%
+  summarize(Sum_Call_Count = sum(Call_Count)) %>%
+  ggplot() + geom_sf(aes(fill = Sum_Call_Count)) +
+    facet_wrap(~hour, ncol = 4) +
+    scale_fill_viridis() +
+    labs(title="Sum of EMS calls by hour of the day") +
+    mapTheme() + theme(legend.position = "bottom") 
+```
+
+```{r, fig.width=15, fig.height=15}
+EMS_Call.panel %>% 
+  group_by(dotw, uniqueID) %>%
+  summarize(Sum_Call_Count = sum(Call_Count)) %>%
+  ggplot() + geom_sf(aes(fill = Sum_Call_Count)) +
+    facet_wrap(~dotw, ncol = 3) +
+    scale_fill_viridis() +
+    labs(title="Sum of EMS calls by day of the week") +
+    mapTheme() + theme(legend.position = "bottom") 
+```
+
+```{r, fig.width=15, fig.height=15}
 EMS_Call.panel %>% 
   group_by(week, uniqueID) %>%
   summarize(Sum_Call_Count = sum(Call_Count)) %>%
@@ -487,8 +503,8 @@ census_fishnet_wide <-
 EMS_Call_final <- EMS_Call.panel %>%
   left_join(census_fishnet_wide, by = c("uniqueID"))
 EMS_Call_final <- EMS_Call_final[is.na(EMS_Call_final$GEOID) != TRUE,] 
-EMS_Call_final <- EMS_Call_final[is.na(EMS_Call_final$name) != TRUE,] 
-EMS_Call_final <- EMS_Call_final[is.na(EMS_Call_final$ZONING) != TRUE,] 
+EMS_Call_final <- EMS_Call_final[is.na(EMS_Call_final$name) != TRUE,]
+EMS_Call_final <- EMS_Call_final[is.na(EMS_Call_final$DPOP_CY) != TRUE,]
 ```
 
 
