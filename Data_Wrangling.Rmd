@@ -104,6 +104,11 @@ Neighborhoods <- st_read('https://data.opendatasoft.com/explore/dataset/zillow-n
 ```
 
 ```{r}
+accident <- st_read("https://opendata.arcgis.com/datasets/1c7c9f723d5947c19c0fc34aaa30ff2a_0.geojson?where=Crash_Severity%20like%20'%25A.Severe%20Injury%25'%20AND%20VDOT_District%20like%20'%255.Hampton%20Roads%25'%20AND%20Crash_Year%20%3E%3D%202017%20AND%20Crash_Year%20%3C%3D%202017") %>%
+   st_transform(2284)
+```
+
+```{r}
 fishnet <- 
   st_make_grid(boundary, cellsize = 5000) %>%
   st_sf()
@@ -118,27 +123,22 @@ fishnet <- fishnet %>%
 
 fishnet <- fishnet %>%
   st_join(Daytimepop[c('DPOP_CY')], st_intersects, largest = TRUE)
-```
 
-
-```{r}
-accident <- st_read("https://opendata.arcgis.com/datasets/1c7c9f723d5947c19c0fc34aaa30ff2a_0.geojson?where=Crash_Severity%20like%20'%25A.Severe%20Injury%25'%20AND%20VDOT_District%20like%20'%255.Hampton%20Roads%25'%20AND%20Crash_Year%20%3E%3D%202017%20AND%20Crash_Year%20%3C%3D%202017") %>%
-   st_transform(2284)
-```
-
-```{r}
 accident_net <- 
   accident %>% 
   dplyr::select() %>% 
   mutate(countAccident = 1) %>% 
   aggregate(., fishnet, sum) %>%
   mutate(countAccident = ifelse(is.na(countAccident), 0, countAccident),
-         uniqueID = rownames(.))
+         uniqueID = rownames(.)) 
+
+fishnet <- fishnet %>%
+  merge(st_set_geometry(accident_net, NULL), by = 'uniqueID')
 ```
 
 ```{r}
 ggplot() +
-  geom_sf(data=accident_net, aes(fill = countAccident)) +
+  geom_sf(data=fishnet, aes(fill = countAccident)) +
   mapTheme()
 ```
 
