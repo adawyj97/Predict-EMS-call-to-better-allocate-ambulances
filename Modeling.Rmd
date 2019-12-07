@@ -10,6 +10,7 @@ knitr::opts_chunk$set(echo = TRUE)
 ```
 
 ```{r}
+library(pscl)
 library(tidyr)
 library(tidyverse)
 library(sf)
@@ -88,36 +89,8 @@ EMS_Call.Test <- filter(EMS_Call_final, week >= 28)
 ```
 
 ```{r}
-regression1 <-
-    glm(Call_Count ~ hour(interval60) + dotw + Temperature, family = "poisson", 
-      data = EMS_Call.Train)
-```
-
-```{r}
-regression2 <- 
-  glm(Call_Count ~  name + dotw + Temperature, family = "poisson", data = EMS_Call.Train)
-```
-
-```{r}
-regression3 <- 
-  glm(Call_Count ~  name + hour(interval60) + dotw + Temperature, 
-     family = "poisson", data = EMS_Call.Train)
-```
-
-```{r}
-regression4 <- 
-  glm(Call_Count ~  name + GEOID +  hour(interval60) + dotw + Temperature +
-                   lagHour + lag2Hours +lag3Hours + lag12Hours + lag1day, 
-     family = "poisson",
-     data = EMS_Call.Train)
-```
-
-```{r}
-regression5 <- 
-  glm(Call_Count ~  name + GEOID + hour(interval60) + dotw + Temperature + Percipitation +
-                   lagHour + lag2Hours +lag3Hours +lag12Hours + lag1day,
-     family = "poisson",
-     data = EMS_Call.Train)
+regression1 <- 
+  zeroinfl(Call_Count ~ hour(interval60) + name + lagHour + lag12Hours| 1, data = EMS_Call.Train)
 ```
 
 ```{r}
@@ -136,11 +109,7 @@ model_pred <- function(dat, fit){
 ```{r}
 week_predictions <- 
   EMS_Call.Test.weekNest %>% 
-    mutate(A_Time_FE = map(.x = data, fit = regression1, .f = model_pred),
-           B_Space_FE = map(.x = data, fit = regression2, .f = model_pred),
-           C_Time_Space_FE = map(.x = data, fit = regression3, .f = model_pred),
-           D_Time_Space_FE_timeLags = map(.x = data, fit = regression4, .f = model_pred),
-           E_Time_Space_FE_timeLags_weather = map(.x = data, fit = regression5, .f = model_pred))
+    mutate(A_Time_FE = map(.x = data, fit = regression1, .f = model_pred))
 
 week_predictions 
 ```
@@ -164,16 +133,6 @@ EMS_Call.Test.weekNest %>%
 ```
 
 ```{r}
-week_predictions %>%
-  dplyr::select(week, Regression, MAE) %>%
-  gather(Variable, MAE, -Regression, -week) %>%
-  ggplot(aes(week, MAE)) + 
-    geom_bar(aes(fill = Regression), position = "dodge", stat="identity") +
-    scale_fill_manual(values = palette5) +
-    labs(title = "Mean Absolute Errors by model specification and week") +
-  plotTheme()
-```
-```{r}
 week_predictions %>% 
     mutate(interval60 = map(data, pull, interval60),
            uniqueID = map(data, pull, uniqueID)) %>%
@@ -192,7 +151,7 @@ week_predictions %>%
 ```
 
 ```{r}
-filter(week_predictions, Regression == "E_Time_Space_FE_timeLags_weather") %>% 
+filter(week_predictions, Regression == "A_Time_FE") %>% 
   unnest() %>% 
   st_sf() %>%
   dplyr::select(uniqueID, Absolute_Error, geometry) %>%
@@ -202,12 +161,12 @@ filter(week_predictions, Regression == "E_Time_Space_FE_timeLags_weather") %>%
     ggplot() + 
       geom_sf(aes(fill = MAE)) +
       scale_fill_viridis() +
-      labs(title="Mean Absolute Error by Regression and grid") +
+      labs(title="Mean Absolute Error by grid") +
       mapTheme() + theme(legend.position="bottom")
 ```
 
 ```{r}
-filter(week_predictions, Regression == "E_Time_Space_FE_timeLags_weather") %>% 
+filter(week_predictions, Regression == "A_Time_FE") %>% 
   unnest() %>% 
   st_sf() %>%
   dplyr::select(uniqueID, Absolute_Error, geometry, interval60) %>%
