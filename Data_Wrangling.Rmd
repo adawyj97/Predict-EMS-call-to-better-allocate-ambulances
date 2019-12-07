@@ -295,11 +295,6 @@ vbCensus <-
 ```
 
 ```{r}
-census_search <- load_variables(2017, "acs5", cache = TRUE)
-View(census_search)
-```
-
-```{r}
 vbTracts <- 
   vbCensus %>%
   as.data.frame() %>%

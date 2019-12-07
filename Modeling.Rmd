@@ -84,13 +84,13 @@ q5 <- function(variable) {as.factor(ntile(variable, 5))}
 ```
 
 ```{r}
-EMS_Call.Train <- filter(EMS_Call_final, week < 28)
-EMS_Call.Test <- filter(EMS_Call_final, week >= 28)
+EMS_Call.Train <- filter(EMS_Call_final, week < 26)
+EMS_Call.Test <- filter(EMS_Call_final, week >= 26)
 ```
 
 ```{r}
 regression1 <- 
-  zeroinfl(Call_Count ~ hour(interval60) + name + lagHour + lag12Hours| 1, data = EMS_Call.Train)
+  zeroinfl(Call_Count ~ hour(interval60) + log(Total_Population) + lagHour + lag2Hours + dotw + name + countAccident| 1, data = EMS_Call.Train)
 ```
 
 ```{r}
@@ -148,6 +148,21 @@ week_predictions %>%
       labs(title = "Mean Predicted/Observed EMS Calls by hourly interval", 
            subtitle = "Virginia Beach; A test set of 3 weeks in December", x = "Hour", y= "EMS Calls") +
       plotTheme()
+```
+
+```{r}
+filter(week_predictions, Regression == "A_Time_FE") %>% 
+  unnest() %>% 
+  st_sf() %>%
+  dplyr::select(uniqueID, Prediction, geometry) %>%
+  gather(Variable, Value, -uniqueID, -geometry) %>%
+    group_by(Variable, uniqueID) %>%
+    summarize(Mean_Prediction = mean(Value)) %>%
+    ggplot() + 
+      geom_sf(aes(fill = Mean_Prediction)) +
+      scale_fill_viridis() +
+      labs(title="Mean prediction by grid") +
+      mapTheme() + theme(legend.position="bottom")
 ```
 
 ```{r}
