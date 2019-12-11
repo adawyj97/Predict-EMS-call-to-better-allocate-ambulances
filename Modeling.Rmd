@@ -91,13 +91,13 @@ EMS_Call_final <-
 ```
 
 ```{r}
-EMS_Call.Train <- filter(EMS_Call_final, week < 26)
-EMS_Call.Test <- filter(EMS_Call_final, week >= 26)
+EMS_Call.Train <- filter(EMS_Call_final, week < 28)
+EMS_Call.Test <- filter(EMS_Call_final, week >= 28)
 ```
 
 ```{r}
 regression1 <- 
-  zeroinfl(Call_Count ~ hour + log_DPOP + lagHour + lag2Hours + dotw + name + countAccident| 1, data = EMS_Call.Train)
+  zeroinfl(Call_Count ~ hour + log_DPOP + lagHour + lag2Hours + dotw + name + uniqueID| 1, data = EMS_Call.Train)
 ```
 
 ```{r}
