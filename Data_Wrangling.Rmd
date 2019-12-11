@@ -260,8 +260,6 @@ vbCensus <-
           case_when(variable == "B01003_001" ~ "Total_Population",
                     variable == "B19013_001" ~ "Median_Household_Income",
                     variable == "B02001_002" ~ "Total_White_Population",
-                    variable == "B08013_001" ~ "Aggregate_Travel_Time_to_Work",
-                    variable == "B08012_001" ~ "Sex_of_Workers_by_Travel_Time_to_work",
                     variable == "B08301_001" ~ "Means_of_Transportation_to_Work",
                     variable == "B08301_010" ~ "Total_Public_Trans_excl_Taxi",
                     variable == "B11007_001" ~ "Total_Households_with_65yrs_and_Over",
@@ -272,7 +270,6 @@ vbCensus <-
   select(variable, estimate, GEOID, geometry) %>%
   spread(variable,estimate) %>%
   mutate(Percent_White = Total_White_Population / Total_Population,
-         Mean_Commute_Time_for_Workers = Aggregate_Travel_Time_to_Work / Sex_of_Workers_by_Travel_Time_to_work,
          Percent_Taking_Public_Trans = Total_Public_Trans_excl_Taxi / Means_of_Transportation_to_Work,
          Percent_Single_Male = (Never_Married_Male + Spouse_Absent_Male + Widowed_Male + Divorced_Male)/Total_Population) %>%
   gather(Variable,Value, -GEOID, -geometry) %>%
@@ -543,7 +540,7 @@ EMS_Call_final <- EMS_Call.panel %>%
 EMS_Call_final <- EMS_Call_final[is.na(EMS_Call_final$GEOID) != TRUE,] 
 EMS_Call_final <- EMS_Call_final[is.na(EMS_Call_final$DPOP_CY) != TRUE,]
 ```
-
+4
 ```{r}
 EMS_Call.panel$hours <- hour(EMS_Call.panel$interval60)
 ```
