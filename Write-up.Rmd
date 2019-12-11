@@ -104,7 +104,7 @@ We would like to  increase the transparency and efficiency of the EMS dispatch s
 
 # 2. Data 
 ## 2.1 Gathering Data 
-We gathered data from multiple perspectives to explore the potential relationships between the number of EMS calls and other features. The predictors included the categories of time lag, demographic features, spatial characteristics, and the other external characteristics of Virginia Beach. The main dataset was the Virginia Beach EMS calls from 2010 to 2018, which was acquired from Virginia Beach Open data. The other supplement datasets were from Tidy Census, Iowa Environment Mesonet,  Virginia Road and Esri Open Data.
+We gathered data from multiple perspectives to explore the potential relationships between the number of EMS calls and other features. The predictors included the categories of time lag, demographic features, spatial characteristics, and the other external characteristics of Virginia Beach. The main dataset was the Virginia Beach EMS calls from 2010 to 2018, which was acquired from Virginia Beach Open data. The other supplement datasets were from Tidy Census, Iowa Environment Mesonet, Virginia Road and Esri Open Data.
 
 ## 2.2 Feature Engineering & Exploratory Analyses
 We explored all gathered datasets and filter 
