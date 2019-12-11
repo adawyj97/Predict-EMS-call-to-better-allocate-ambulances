@@ -90,12 +90,41 @@ qBr <- function(df, variable, rnd) {
 q5 <- function(variable) {as.factor(ntile(variable, 5))}
 ```
 
+# 1. Introduction 
+In the emergency medical service (EMS) system, the time of responding the call is always crucial for saving people’s lives. In Virginia Beach, there are 22 volunteer rescue squads, but more than 10% of EMS calls have been delayed in each year. Though the control center send the closest ambulance to the scene, the unpredicted locations of calls still make the ambulance driver spend a long time on the way. According to the annual report of Virginia Beach EMS, from receiving calls to arriving at the scene, the drivers' average response time was more than 9 minutes, and the responding time increased between 2017 and 2018. Based on the above situation, our project aims to minimize the time from driver notified to arriving at scene. 
+In addition, we would like to increase the transparency and efficiency of the EMS dispatch system by empowering the ambulance drivers to have more decision-making power. For our use case, the driver would have a general sense about the current call pattern around the city by checking our predicted risk map at 1-hour time interval.Instead of staying at dispatch center to wait for the call, he or she can stay around the high risk location in advance. Our multi-driver communication system also allows the driver to be aware of the general locations of other drivers.
+
+# 2. Data 
+## 2.1 Gathering Data 
+We gathered data from multiple sources to explore the potential relationships between the number of EMS calls and other features. The predictors included the different types of time lag, demographic features, spatial characteristics, and other relevant external characteristics of Virginia Beach. The main dataset was the Virginia Beach EMS calls from 2010 to 2018, which was acquired from Virginia Beach Open data portal.The other supplement datasets were from Tidy Census, Iowa Environment Mesonet, Virginia Road and Esri Open Data. 
+
+## 2.2 Feature Engineering
+To utilize the gathered datasets in our model, we did feature engineering and transformed the data into different formats. Below is an introduction of the data processing and the logic behind it. 
+
+### EMS Call Data
+We imported EMS call data from 2010 to 2018 in Virginia Beach. In our project, we used the data of June, July and August in 2017 as training and testing data. We standardized the call times to  hours and stored the data in the column interval60 in the dataset. In terms of spatial unit,  we created a fishnet grid using the boundary of the city and excluded the water bodies. Finally, we aggregated call counts in each grid cell by hour, and stored the data in a new column Call_Count. Therefore, each row in our final time/space panel refers to the number of EMS calls by grid cell per hour in each day of the week. 
+
 ```{r, results="hide"}
 EMS_Calls <- st_read('C:\\Users\\Sarah\\Documents\\MUSA_507_Public_Policy_Analytics\\Predict-EMS-call-to-better-allocate-ambulances\\EMS_calls.geojson')
+boundary <- st_read('https://opendata.arcgis.com/datasets/82ada480c5344220b2788154955ce5f0_8.geojson') %>%
+  st_set_crs(4326) %>%
+   st_transform(2284)
 ```
 
 ```{r}
+fishnet <- 
+  st_make_grid(boundary, cellsize = 5000) %>%
+  st_sf()
 
+fishnet <- 
+  fishnet[boundary,] %>%
+  mutate(uniqueID = rownames(.)) %>%
+  dplyr::select(uniqueID)
+
+ggplot() +
+  geom_sf(data=fishnet) +
+  mapTheme() +
+  labs(title = "Fishnet of grid size 5000 ft")
 ```
 
 # 1. Introduction 
@@ -106,31 +135,33 @@ We would like to  increase the transparency and efficiency of the EMS dispatch s
 ## 2.1 Gathering Data 
 We gathered data from multiple perspectives to explore the potential relationships between the number of EMS calls and other features. The predictors included the categories of time lag, demographic features, spatial characteristics, and the other external characteristics of Virginia Beach. The main dataset was the Virginia Beach EMS calls from 2010 to 2018, which was acquired from Virginia Beach Open data. The other supplement datasets were from Tidy Census, Iowa Environment Mesonet, Virginia Road and Esri Open Data.
 
-## 2.2 Feature Engineering & Exploratory Analyses
-We explored all gathered datasets and filter 
-
-### Time
-
 ### Demographic
 
-### Spatial characteristics
+### Spatial Characteristics
 
 ### Other 
 
-# 3. Method 
+### Final Space/time Panel
 
-## 3.1 Building Model 
+### Time lag
+We supposed the number of EMS calls at certain time intervals relates to the number of calls during other time intervals around it, so additional feature engineering was done to mine the data for critical time trends. The time lags were created and included time lags by hour from 1 to 4 hours, a half-day time lag, and a one-day time lag. We assigned the aggregated call counts per grid cell to each time lag. 
 
-## 3.2 Validation 
+# 3. Exploratory Analyses
 
-# 4. Results 
+# 4. Method 
 
-## 4.1 Model Outcome
+## 4.1 Building Model 
 
-## 4.2 Accuracy vs. Generalizability
+## 4.2 Validation 
 
-## 4.3 Additional Maps & Data Visualization
+# 5. Results 
 
-# 5. Conclusion
+## 5.1 Model Outcome
+
+## 5.2 Accuracy vs. Generalizability
+
+## 5.3 Additional Maps & Data Visualization
+
+# 6. Conclusion
 
 

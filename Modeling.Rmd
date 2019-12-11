@@ -98,7 +98,10 @@ EMS_Call.Test <- filter(EMS_Call_final, week >= 28)
 ```{r}
 regression1 <- 
   zeroinfl(Call_Count ~ hour(interval60) + name + lagHour + lag12Hours + countAccident | 1, data = EMS_Call.Train)
+<<<<<<< HEAD
   zeroinfl(Call_Count ~ hour + log_DPOP + lagHour + lag2Hours + dotw + name + uniqueID| 1, data = EMS_Call.Train)
+=======
+>>>>>>> 8b44e3a9c08d29dca118ff73c804d64c333dc09f
 ```
 
 ```{r}
@@ -205,6 +208,7 @@ filter(week_predictions, Regression == "A_Time_FE") %>%
              subtitle = "For the Monday of Week 28") +
         mapTheme() + theme(legend.position="bottom")
 ```
+
 ```{r}
 crossValidate <- function(dataset, id, dependentVariable, indVariables) {
 
