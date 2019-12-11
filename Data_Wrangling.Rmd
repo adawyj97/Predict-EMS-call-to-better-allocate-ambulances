@@ -64,23 +64,7 @@ plotTheme <- function(base_size = 12) {
     strip.text.x = element_text(size = 14)
   )
 }
-
-palette5 <- c("#eff3ff","#bdd7e7","#6baed6","#3182bd","#08519c")
-palette4 <- c("#D2FBD4","#92BCAB","#527D82","#123F5A")
-palette3 <- c("#6baed6","#3182bd","#08519c")
-palette2 <- c("#6baed6","#08519c")
-
-qBr <- function(df, variable, rnd) {
-  if (missing(rnd)) {
-    as.character(quantile(round(df[[variable]],0),
-                          c(.01,.2,.4,.6,.8), na.rm=T))
-  } else if (rnd == FALSE | rnd == F) {
-    as.character(formatC(quantile(df[[variable]]), digits = 3),
-                          c(.01,.2,.4,.6,.8), na.rm=T)
-  }
-}
-
-q5 <- function(variable) {as.factor(ntile(variable, 5))}
+palette = c('#1f638e', '#4b95c2', '#84c8f6', '#fab5a0', '#fe6843', '#dc0000')
 ```
 
 ```{r}
@@ -561,21 +545,16 @@ EMS_Call_final <- EMS_Call_final[is.na(EMS_Call_final$DPOP_CY) != TRUE,]
 ```
 
 ```{r}
-# Hospital <- st_read("C:/Users/Xiaoran Wang/Desktop/MUSA507/FinalProject/all_hospital.shp") %>%
-#   st_transform(2284)
-
-# hospital_buffer <-st_buffer(Hospital, dist = 10000)
-# fishnet_in_buffer <- st_join(hospital_buffer, fishnet, st_contains)
-```
-
-```{r}
 EMS_Call.panel$hours <- hour(EMS_Call.panel$interval60)
 ```
 
 ```{r}
-ggplot(data = EMS_Call.panel, 
-       aes(x=hours, 
+EMS_Call_final %>%
+  group_by(hour, dotw) %>%
+  summarise(
+  Call_Count = sum(Call_Count)) %>%
+ggplot(aes(x=hour, 
            y=dotw, 
-           fill=Call_Count))
+           fill=Call_Count)) + geom_tile() + scale_fill_gradient(low = "#E4FFFF", high = "#EF200A", name = 'Count of EMS Calls')
 ```
 
