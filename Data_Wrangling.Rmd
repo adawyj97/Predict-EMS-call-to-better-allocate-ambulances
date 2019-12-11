@@ -23,6 +23,7 @@ library(riem)
 library(gridExtra)
 library(knitr)
 library(kableExtra)
+library(reshape2)
 #library(stargazer)
 
 mapTheme <- function(base_size = 12) {
@@ -295,11 +296,6 @@ vbCensus <-
 ```
 
 ```{r}
-census_search <- load_variables(2017, "acs5", cache = TRUE)
-View(census_search)
-```
-
-```{r}
 vbTracts <- 
   vbCensus %>%
   as.data.frame() %>%
@@ -561,7 +557,28 @@ census_fishnet_wide <-
 EMS_Call_final <- EMS_Call.panel %>%
   left_join(census_fishnet_wide, by = c("uniqueID"))
 EMS_Call_final <- EMS_Call_final[is.na(EMS_Call_final$GEOID) != TRUE,] 
-EMS_Call_final <- EMS_Call_final[is.na(EMS_Call_final$name) != TRUE,]
 EMS_Call_final <- EMS_Call_final[is.na(EMS_Call_final$DPOP_CY) != TRUE,]
 ```
+
+```{r}
+Hospital <- st_read("C:/Users/Xiaoran Wang/Desktop/MUSA507/FinalProject/all_hospital.shp") %>%
+  st_transform(2284)
+```
+
+```{r}
+# hospital_buffer <-st_buffer(Hospital, dist = 10000)
+# fishnet_in_buffer <- st_join(hospital_buffer, fishnet, st_contains)
+```
+
+```{r}
+EMS_Call.panel$hours <- hour(EMS_Call.panel$interval60)
+```
+
+```{r}
+ggplot(data = EMS_Call.panel, 
+       aes(x=hours, 
+           y=dotw, 
+           fill=Call_Count))
+```
+
 

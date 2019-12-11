@@ -90,7 +90,7 @@ EMS_Call.Test <- filter(EMS_Call_final, week >= 28)
 
 ```{r}
 regression1 <- 
-  zeroinfl(Call_Count ~ hour(interval60) + name + lagHour + lag12Hours| 1, data = EMS_Call.Train)
+  zeroinfl(Call_Count ~ hour(interval60) + name + lagHour + lag12Hours + countAccident | 1, data = EMS_Call.Train)
 ```
 
 ```{r}
