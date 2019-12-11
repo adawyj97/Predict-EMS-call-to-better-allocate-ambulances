@@ -84,13 +84,24 @@ q5 <- function(variable) {as.factor(ntile(variable, 5))}
 ```
 
 ```{r}
+EMS_Call_final <- 
+  EMS_Call_final %>% 
+  mutate(hour = hour(interval60)) %>%
+  mutate(log_DPOP = log(DPOP_CY))
+```
+
+```{r}
 EMS_Call.Train <- filter(EMS_Call_final, week < 28)
 EMS_Call.Test <- filter(EMS_Call_final, week >= 28)
 ```
 
 ```{r}
 regression1 <- 
+<<<<<<< HEAD
   zeroinfl(Call_Count ~ hour(interval60) + name + lagHour + lag12Hours + countAccident | 1, data = EMS_Call.Train)
+=======
+  zeroinfl(Call_Count ~ hour + log_DPOP + lagHour + lag2Hours + dotw + name + uniqueID| 1, data = EMS_Call.Train)
+>>>>>>> 74ce2dabd6e8bd5b6a77082e7cfa6563a85bfdea
 ```
 
 ```{r}
@@ -154,6 +165,21 @@ week_predictions %>%
 filter(week_predictions, Regression == "A_Time_FE") %>% 
   unnest() %>% 
   st_sf() %>%
+  dplyr::select(uniqueID, Prediction, geometry) %>%
+  gather(Variable, Value, -uniqueID, -geometry) %>%
+    group_by(Variable, uniqueID) %>%
+    summarize(Mean_Prediction = mean(Value)) %>%
+    ggplot() + 
+      geom_sf(aes(fill = Mean_Prediction)) +
+      scale_fill_viridis() +
+      labs(title="Mean prediction by grid") +
+      mapTheme() + theme(legend.position="bottom")
+```
+
+```{r}
+filter(week_predictions, Regression == "A_Time_FE") %>% 
+  unnest() %>% 
+  st_sf() %>%
   dplyr::select(uniqueID, Absolute_Error, geometry) %>%
   gather(Variable, Value, -uniqueID, -geometry) %>%
     group_by(Variable, uniqueID) %>%
@@ -181,5 +207,68 @@ filter(week_predictions, Regression == "A_Time_FE") %>%
         labs(title="Mean absolute call count error by tract and hour",
              subtitle = "For the Monday of Week 28") +
         mapTheme() + theme(legend.position="bottom")
+```
+```{r}
+crossValidate <- function(dataset, id, dependentVariable, indVariables) {
+
+allPredictions <- data.frame()
+cvID_list <- unique(dataset[[id]])
+
+for (i in cvID_list) {
+
+  thisFold <- i
+  cat("This hold out fold is", thisFold, "\n")
+
+  fold.train <- filter(dataset, dataset[[id]] != thisFold) %>% as.data.frame() %>% 
+                dplyr::select(id, geometry, indVariables, dependentVariable)
+  fold.test  <- filter(dataset, dataset[[id]] == thisFold) %>% as.data.frame() %>% 
+                dplyr::select(id, geometry, indVariables, dependentVariable)
+  
+  regression <-
+    zeroinfl(Call_Count ~ .|1, 
+      data = fold.train %>% 
+      dplyr::select(-geometry, -id))
+  
+  thisPrediction <- 
+    mutate(fold.test, Prediction = predict(regression, fold.test, type = "response"))
+    
+  allPredictions <-
+    rbind(allPredictions, thisPrediction)
+    
+  }
+  return(st_sf(allPredictions))
+}
+```
+
+```{r}
+reg.cv <- crossValidate(
+  dataset = EMS_Call_final,
+  id = "name",
+  dependentVariable = "Call_Count",
+  indVariables = c("hour","log_DPOP", "lagHour", "lag2Hours", "dotw", "name", "countAccident")) %>%
+    dplyr::select(name = name, Call_Count, Prediction, geometry)
+```
+
+```{r}
+reg.summary <- 
+  
+    mutate(reg.cv,           Error = Call_Count - Prediction,
+                             CVBY = "Random k-fold CV: neighborhoods")%>%
+    st_sf() 
+
+reg.cvsummary <- reg.summary %>%
+  mutate(MAE = abs(Error)) %>%
+  group_by(name) %>%
+  summarise(
+  MAE = mean(MAE, na.rm = TRUE)
+)
+```
+
+```{r}
+ggplot(reg.cvsummary, aes(MAE)) + 
+  geom_histogram(bins = 10, colour="white", fill = "#FA7800") +
+  labs(title="Distribution of MAE", subtitle = "Cross validation; cvID = Neighborhood",
+       x="Mean Absolute Error", y="Count") +
+  plotTheme()
 ```
 

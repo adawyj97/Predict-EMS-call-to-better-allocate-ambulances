@@ -561,11 +561,9 @@ EMS_Call_final <- EMS_Call_final[is.na(EMS_Call_final$DPOP_CY) != TRUE,]
 ```
 
 ```{r}
-Hospital <- st_read("C:/Users/Xiaoran Wang/Desktop/MUSA507/FinalProject/all_hospital.shp") %>%
-  st_transform(2284)
-```
+# Hospital <- st_read("C:/Users/Xiaoran Wang/Desktop/MUSA507/FinalProject/all_hospital.shp") %>%
+#   st_transform(2284)
 
-```{r}
 # hospital_buffer <-st_buffer(Hospital, dist = 10000)
 # fishnet_in_buffer <- st_join(hospital_buffer, fishnet, st_contains)
 ```
@@ -580,5 +578,4 @@ ggplot(data = EMS_Call.panel,
            y=dotw, 
            fill=Call_Count))
 ```
-
 
