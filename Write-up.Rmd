@@ -13,7 +13,7 @@ output:
 
 ```{r setup}
 knitr::opts_chunk$set(echo = TRUE, results=TRUE, echo=TRUE, message = FALSE, 
-                      warning=FALSE, fig.align="center", cache=TRUE)
+                      warning=FALSE, fig.align="center", cache=FALSE)
 options(scipen=99)
 ```
 
@@ -105,7 +105,7 @@ To utilize the gathered datasets in our model, we did feature engineering and tr
 We imported EMS call data from 2010 to 2018 in Virginia Beach. In our project, we used the data of June, July, and August in 2017 as training and testing data. We standardized the call times to hours and stored the data in the column interval60 in the dataset. In terms of spatial unit,  we created a fishnet grid using the boundary of the city and excluded the water bodies. Finally, we aggregated call counts in each grid cell by the hour, and stored the data in a new column Call_Count. Therefore, each row in our final time/space panel refers to the number of EMS calls by grid cell per hour in each day of the week. 
 
 ```{r, results="hide"}
-EMS_Calls <- st_read('C:\\Users\\Xiaoran Wang\\Desktop\\MUSA507\\FinalProject\\tem_507\\Predict-EMS-call-to-better-allocate-ambulances\\EMS_calls.geojson') %>%
+EMS_Calls <- st_read('C:\\Users\\Xiaoran Wang\\Desktop\\MUSA507\\FinalProject\\tem_507\\Predict-EMS-call-to-better-allocate-ambulances\\EMS_calls1.geojson') %>%
   st_transform(2284)
 
 boundary <- st_read('https://opendata.arcgis.com/datasets/82ada480c5344220b2788154955ce5f0_8.geojson') %>%
@@ -244,7 +244,7 @@ study.panel <-
 nrow(study.panel)   
 ```
 
-```{r}
+```{r, results='hide'}
 EMS_Call.panel <- 
   EMS.template %>%
     mutate(Call_Counter = 1) %>%
@@ -276,6 +276,33 @@ EMS_Call.panel <-
 ```
 
 # 3. Exploratory Analyses
+
+```{r}
+Train_plot <- filter(EMS_Call.panel, week < 28)
+Test_plot <- filter(EMS_Call.panel, week >= 28)
+```
+
+```{r, fig.width= 18, fig.height=4}
+mondayMidnight <- 
+  EMS_Call.panel %>%
+  mutate(mondayMidnight = ifelse(wday(interval60) == 2 & hour(interval60) == 1,
+                                 as.POSIXct(interval60),0)) %>%
+  filter(mondayMidnight != 0) 
+
+  rbind(
+    mutate(Train_plot, label = "Training"), 
+    mutate(Test_plot, label = "Testing")) %>%
+      group_by(label, interval60) %>% 
+        summarize(Call_Count = sum(Call_Count)) %>%
+        ggplot(aes(interval60, Call_Count, colour = label)) + 
+          geom_line() +
+          ylim(0,20) +
+          labs(title="EMS calls in Virginia Beach by week: June through August, 2018",
+               subtitle="Monday demarked in black", x="Day", y="Call Counts") +
+          plotTheme() + theme(panel.grid.major = element_blank()) +   
+          scale_colour_manual(values = palette2) +
+            geom_vline(data = mondayMidnight, aes(xintercept = mondayMidnight), colour="black")
+```
 
 # 4. Method 
 
