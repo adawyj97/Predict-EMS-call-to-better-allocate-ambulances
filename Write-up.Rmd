@@ -105,7 +105,7 @@ To utilize the gathered datasets in our model, we did feature engineering and tr
 We imported EMS call data from 2010 to 2018 in Virginia Beach. In our project, we used the data of June, July and August in 2017 as training and testing data. We standardized the call times to  hours and stored the data in the column interval60 in the dataset. In terms of spatial unit,  we created a fishnet grid using the boundary of the city and excluded the water bodies. Finally, we aggregated call counts in each grid cell by hour, and stored the data in a new column Call_Count. Therefore, each row in our final time/space panel refers to the number of EMS calls by grid cell per hour in each day of the week. 
 
 ```{r, results="hide"}
-EMS_Calls <- st_read('C:\\Users\\Sarah\\Documents\\MUSA_507_Public_Policy_Analytics\\Predict-EMS-call-to-better-allocate-ambulances\\EMS_calls.geojson')
+EMS_Calls <- st_read('C:\\Users\\Sarah\\Documents\\MUSA_507_Public_Policy_Analytics\\Predict-EMS-call-to-better-allocate-ambulances\\EMS_calls1.geojson')
 boundary <- st_read('https://opendata.arcgis.com/datasets/82ada480c5344220b2788154955ce5f0_8.geojson') %>%
   st_set_crs(4326) %>%
    st_transform(2284)
