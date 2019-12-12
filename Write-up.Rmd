@@ -10,14 +10,25 @@ output:
     toc_float: true
     theme: spacelab
 ---
+<style>
+.superbigimage{
+overflow-x:scroll;
+white-space: nowrap;
+}
 
+.superbigimage img{
+max-width: none;
+}
+
+
+</style>
 ```{r setup}
 knitr::opts_chunk$set(echo = TRUE, results=TRUE, echo=TRUE, message = FALSE, 
-                      warning=FALSE, fig.align="center", cache=TRUE)
-options(scipen=99)
+                      warning=FALSE, fig.align="center", cache=FALSE, tigris_use_cache = TRUE)
 ```
 
 ```{r import libs}
+library(pscl)
 library(tidyr)
 library(tidyverse)
 library(sf)
@@ -91,27 +102,35 @@ q5 <- function(variable) {as.factor(ntile(variable, 5))}
 ```
 
 # 1. Introduction 
-In the emergency medical service (EMS) system, the time of responding the call is always crucial for saving people’s lives. In Virginia Beach, there are 22 volunteer rescue squads, but more than 10% of EMS calls have been delayed in each year. Though the control center send the closest ambulance to the scene, the unpredicted locations of calls still make the ambulance driver spend a long time on the way. According to the annual report of Virginia Beach EMS, from receiving calls to arriving at the scene, the drivers' average response time was more than 9 minutes, and the responding time increased between 2017 and 2018. Based on the above situation, our project aims to minimize the time from driver notified to arriving at scene. 
-In addition, we would like to increase the transparency and efficiency of the EMS dispatch system by empowering the ambulance drivers to have more decision-making power. For our use case, the driver would have a general sense about the current call pattern around the city by checking our predicted risk map at 1-hour time interval.Instead of staying at dispatch center to wait for the call, he or she can stay around the high risk location in advance. Our multi-driver communication system also allows the driver to be aware of the general locations of other drivers.
+In the emergency medical service (EMS) system, the time of responding to the call is always crucial for saving people’s lives. In Virginia Beach, there are 22 volunteer rescue squads, but more than 10% of EMS calls have been delayed in each year. Though the control center sends the closest ambulance to the scene, the unpredicted locations of calls still make the ambulance driver spend a long time on the way. According to the annual report of Virginia Beach EMS, from receiving calls to arriving at the scene, the drivers' average response time was more than 9 minutes, and the responding time increased between 2017 and 2018. Based on the above situation, our project aims to minimize the time from driver notified to arriving at the scene. 
+In addition, we would like to increase the transparency and efficiency of the EMS dispatch system by empowering the ambulance drivers to have more decision-making power. For our use case, the driver would have a general sense of the current call pattern around the city by checking our predicted risk map at 1-hour time interval. Instead of staying at the dispatch center to wait for the call, he or she can stay around the high risk location in advance. Our multi-driver communication system also allows the driver to be aware of the general locations of other drivers.
 
 # 2. Data 
-## 2.1 Gathering Data 
-We gathered data from multiple sources to explore the potential relationships between the number of EMS calls and other features. The predictors included the different types of time lag, demographic features, spatial characteristics, and other relevant external characteristics of Virginia Beach. The main dataset was the Virginia Beach EMS calls from 2010 to 2018, which was acquired from Virginia Beach Open data portal.The other supplement datasets were from Tidy Census, Iowa Environment Mesonet, Virginia Road and Esri Open Data. 
+We gathered data from multiple sources to explore the potential relationships between the number of EMS calls and other features. The predictors included the different types of time lag, demographic features, spatial characteristics, and other relevant external characteristics of Virginia Beach. The main dataset was the Virginia Beach EMS calls from 2010 to 2018, which was acquired from the Virginia Beach Open data portal. The other supplement datasets were from Tidy Census, Iowa Environment Mesonet, Virginia Road and Esri Open Data. 
 
-## 2.2 Feature Engineering
+## 2.1 Feature Engineering
 To utilize the gathered datasets in our model, we did feature engineering and transformed the data into different formats. Below is an introduction of the data processing and the logic behind it. 
 
 ### EMS Call Data
-We imported EMS call data from 2010 to 2018 in Virginia Beach. In our project, we used the data of June, July and August in 2017 as training and testing data. We standardized the call times to  hours and stored the data in the column interval60 in the dataset. In terms of spatial unit,  we created a fishnet grid using the boundary of the city and excluded the water bodies. Finally, we aggregated call counts in each grid cell by hour, and stored the data in a new column Call_Count. Therefore, each row in our final time/space panel refers to the number of EMS calls by grid cell per hour in each day of the week. 
+We imported EMS call data from 2010 to 2018 in Virginia Beach. In our project, we used the data of June, July, and August in 2017 as training and testing data. We standardized the call times to hours and stored the data in the column interval60 in the dataset. In terms of spatial unit,  we created a fishnet grid using the boundary of the city and excluded the water bodies. Finally, we aggregated call counts in each grid cell by the hour, and stored the data in a new column Call_Count. Therefore, each row in our final time/space panel refers to the number of EMS calls by grid cell per hour in each day of the week. 
 
 ```{r, results="hide"}
-EMS_Calls <- st_read('C:\\Users\\Sarah\\Documents\\MUSA_507_Public_Policy_Analytics\\Predict-EMS-call-to-better-allocate-ambulances\\EMS_calls1.geojson')
+EMS_Calls <- st_read('C:\\Users\\Sarah\\Documents\\MUSA_507_Public_Policy_Analytics\\Predict-EMS-call-to-better-allocate-ambulances\\EMS_calls1.geojson') %>%
+   st_transform(2284)
+
 boundary <- st_read('https://opendata.arcgis.com/datasets/82ada480c5344220b2788154955ce5f0_8.geojson') %>%
   st_set_crs(4326) %>%
    st_transform(2284)
+
+EMS_calls2 <-
+  EMS_Calls %>% 
+  mutate(interval60 = floor_date(ymd_hms(call_date_and_time), unit = "hour"),
+         interval15 = floor_date(ymd_hms(call_date_and_time), unit = "15 mins"),
+         week = week(interval60),
+         dotw = wday(interval60, label=TRUE))
 ```
 
-```{r}
+```{r, fig.width=3}
 fishnet <- 
   st_make_grid(boundary, cellsize = 5000) %>%
   st_sf()
@@ -127,40 +146,286 @@ ggplot() +
   labs(title = "Fishnet of grid size 5000 ft")
 ```
 
-# 1. Introduction 
-In the emergency medical service (EMS) system, the time of responding the call is always crucial for saving people’s lives. In Virginia Beach, there are 10 volunteer rescue squads, but more than 10% of EMS calls are delayed in each year. Though the control center send the closest ambulance to the scene, the unpredicted locations of calls still make the ambulance driver spend a long time on the way. According to the annual report of Virginia Beach EMS, from receiving calls to arriving at the scene, the driver's average response time was more than 9 min, and the responding time kept increasing from 2017 to 2018. Based on the above situation, our project aims to minimize the time from “notifying driver” to “arriving at scene”. 
-We would like to  increase the transparency and efficiency of the EMS dispatch system by empowering the ambulance drivers to have more decision-making power. For our use case, the driver would have a general sense about the current call pattern around the city by checking our predicted risk map at 1-hour time interval, and then instead of staying at dispatch center to wait for the call, he could stay around the high risk location in advance. Our multi-driver communication also allows the driver to know the general location of other drivers, 
-
-# 2. Data 
-## 2.1 Gathering Data 
-We gathered data from multiple perspectives to explore the potential relationships between the number of EMS calls and other features. The predictors included the categories of time lag, demographic features, spatial characteristics, and the other external characteristics of Virginia Beach. The main dataset was the Virginia Beach EMS calls from 2010 to 2018, which was acquired from Virginia Beach Open data. The other supplement datasets were from Tidy Census, Iowa Environment Mesonet, Virginia Road and Esri Open Data.
-
 ### Demographic
+Census level data were downloaded. The data included socioeconomic and demographic features of Virginia Beach. Firstly, the population size in each grid cell directly affects the possibility of making calls, and people’s likelihood of making EMS calls may relate to racial factors. We had a total population and percentage of the white population to represent the above two factors. Then, related research indicated that the aging population and single males were more likely to make EMS calls. Therefore we used the total households with 65-years old and over as our data for the aged population, and sum up the number of males in the marital status of never married, spouse absent, widowed, and divorced as the predictor of single male. We assumed the income level is another decisive factor on whether to make EMS calls, and the median household income was added. In addition, people who took public transit to work may not have car ownership or live in congested areas, so this group tends to have a higher likelihood of making EMS calls. 
+
+```{r, results='hide'}
+vbCensus <- 
+  get_acs(geography = "tract", variables = c("B01003_001", "B19013_001", "B02001_002",
+                                             "B08301_001", "B08301_010", "B11007_001", "B12001_003",
+                                             "B12001_007", "B12001_009", "B12001_010"), 
+          year = 2017, state = "VA", geometry = TRUE, county=c("Virginia Beach")) %>%
+  mutate(variable = 
+          case_when(variable == "B01003_001" ~ "Total_Population",
+                    variable == "B19013_001" ~ "Median_Household_Income",
+                    variable == "B02001_002" ~ "Total_White_Population",
+                    variable == "B08301_001" ~ "Means_of_Transportation_to_Work",
+                    variable == "B08301_010" ~ "Total_Public_Trans_excl_Taxi",
+                    variable == "B11007_001" ~ "Total_Households_with_65yrs_and_Over",
+                    variable == "B12001_003" ~ "Never_Married_Male",
+                    variable == "B12001_007" ~ "Spouse_Absent_Male", 
+                    variable == "B12001_009" ~ "Widowed_Male",
+                    variable == "B12001_010" ~ "Divorced_Male")) %>%
+  select(variable, estimate, GEOID, geometry) %>%
+  spread(variable,estimate) %>%
+  mutate(Percent_White = Total_White_Population / Total_Population,
+         Percent_Taking_Public_Trans = Total_Public_Trans_excl_Taxi / Means_of_Transportation_to_Work,
+         Percent_Single_Male = (Never_Married_Male + Spouse_Absent_Male + Widowed_Male + Divorced_Male)/Total_Population) %>%
+  gather(Variable,Value, -GEOID, -geometry) %>%
+  st_transform(2284)
+
+vbCensus_wide <- spread(vbCensus, Variable, Value)
+
+census_fishnet_wide <- 
+  fishnet[c(1)] %>% 
+  st_join(vbCensus_wide[-c(2:18)], st_intersects, largest = TRUE) %>% 
+  left_join(st_set_geometry(vbCensus_wide, NULL), by=c('GEOID')) %>% 
+  st_set_geometry(NULL)
+```
 
 ### Spatial Characteristics
+Neighborhoods and census tracts were spatial characteristics in our prediction. Since cell grids belonged to neighbor geographical units might have similar call pattern, we joined those two characteristics to the fishnet grids. The GEOID refers to the census tracts and NAME represents the name of the neighborhood. 
+
+```{r, results='hide'}
+Neighborhoods <- st_read('https://data.opendatasoft.com/explore/dataset/zillow-neighborhoods@public/download/?format=geojson&refine.state=VA&refine.county=Virginia+Beach+City&timezone=America/New_York')  %>%
+   st_transform(2284)
+
+fishnet <- 
+  fishnet %>%
+  st_join(Neighborhoods[2], st_intersects, largest = TRUE)
+
+for (i in 1: nrow(fishnet)) {
+  if (is.na(fishnet$name[i])) {
+    previous <- fishnet$uniqueID[i - 1]
+    previous_neighborhood <- fishnet[fishnet$uniqueID == previous,]$name
+    fishnet$name[i] <- previous_neighborhood
+  }
+}
+```
 
 ### Other 
+EMS call was an occasional event with high rareness. Sometimes the special outside factors or accidents might directly generate EMS calls or affect the aggregated number of calls. For example, in beach city high-temperature summer days, the high volume of tourists might lead to more drowning or sunstroke. Thus, we added weather conditions as predictor, which include high temperature, wind speed, and precipitation. Besides that, we found that car crash was one of the major reasons for making EMS calls, so we aggregated the number of severe car accidents in 2017 into each grid cell. 
+
+```{r,  results='hide'}
+weather.Data <- 
+  riem_measures(station = "NTU", date_start = "2017-01-01", date_end = "2018-01-01")
+
+weather.Panel <-  
+  weather.Data %>%
+    replace(is.na(.), 0) %>%
+    mutate(interval60 = ymd_h(substr(valid,1,13))) %>%
+    mutate(week = week(interval60),
+           dotw = wday(interval60, label=TRUE)) %>%
+    group_by(interval60) %>%
+    summarize(Temperature = max(tmpf),
+              Percipitation = sum(p01i),
+              Wind_Speed = max(sknt)) %>%
+    mutate(Temperature = ifelse(Temperature == 0, 42, Temperature))
+
+accident <- st_read("https://opendata.arcgis.com/datasets/1c7c9f723d5947c19c0fc34aaa30ff2a_0.geojson?where=Crash_Severity%20like%20'%25A.Severe%20Injury%25'%20AND%20VDOT_District%20like%20'%255.Hampton%20Roads%25'%20AND%20Crash_Year%20%3E%3D%202017%20AND%20Crash_Year%20%3C%3D%202017") %>%
+   st_transform(2284)
+
+accident_net <- 
+  accident %>% 
+  dplyr::select() %>% 
+  mutate(countAccident = 1) %>% 
+  aggregate(., fishnet, sum) %>%
+  mutate(countAccident = ifelse(is.na(countAccident), 0, countAccident),
+         uniqueID = rownames(.)) 
+
+fishnet <- fishnet %>%
+  merge(st_set_geometry(accident_net, NULL), by = 'uniqueID')
+```
 
 ### Final Space/time Panel
+The dataset for doing spate/time analysis must be in a panel format, which means the dataset must include all possible combinations of space and time in each cell grid. EMS_Call.panel was our final study panel, which included the total combination of 24 hours a day * 7 days a week * 9 weeks *343 grid cells, and the total number of combinations in the panel was 518616. 
+
+```{r, results='hide'}
+EMS_fishnet <-
+  EMS_calls2 %>% 
+  st_join(fishnet, st_intersects) %>% 
+  st_set_geometry(NULL)
+
+EMS.template <- 
+  EMS_fishnet %>%
+  filter(week >= 22 & week <= 24 | week >= 25 & week <= 30)
+
+study.panel <- 
+  expand.grid(interval60 = seq(floor_date(ymd_hms(min(EMS.template$call_date_and_time)), unit = "hour"),floor_date(ymd_hms(max(EMS.template$call_date_and_time)), unit = "hour"), by = '60 mins'), 
+              uniqueID = unique(fishnet$uniqueID)) 
+
+EMS_Call.panel <- 
+  EMS.template %>%
+    mutate(Call_Counter = 1) %>%
+    right_join(study.panel) %>% 
+      group_by(interval60, uniqueID) %>%
+      summarize(Call_Count = sum(Call_Counter, na.rm=T)) %>%
+      left_join(census_fishnet_wide, by = c("uniqueID")) %>%
+      left_join(weather.Panel) %>%
+      left_join(fishnet, by=c("uniqueID")) %>%
+            ungroup() %>%                                 
+            mutate(week = week(interval60),
+                   dotw = wday(interval60, label = TRUE)) %>%
+            st_sf()
+```
 
 ### Time lag
 We supposed the number of EMS calls at certain time intervals relates to the number of calls during other time intervals around it, so additional feature engineering was done to mine the data for critical time trends. The time lags were created and included time lags by hour from 1 to 4 hours, a half-day time lag, and a one-day time lag. We assigned the aggregated call counts per grid cell to each time lag. 
 
+```{r}
+EMS_Call.panel <- 
+  EMS_Call.panel %>% 
+    arrange(uniqueID, interval60) %>% 
+    mutate(lagHour = dplyr::lag(Call_Count,1),
+           lag2Hours = dplyr::lag(Call_Count,2),
+           lag3Hours = dplyr::lag(Call_Count,3),
+           lag4Hours = dplyr::lag(Call_Count,4),
+           lag12Hours = dplyr::lag(Call_Count,12),
+           lag1day = dplyr::lag(Call_Count,24)) %>%
+    mutate(day = yday(interval60)) 
+```
+Finally, we split the data to train the model on first 6 weeks of data and test it on the latter 3 weeks. 
+```{r}
+EMS_Call.Train <- filter(EMS_Call.panel, week < 28)
+EMS_Call.Test <- filter(EMS_Call.panel, week >= 28)
+```
+
 # 3. Exploratory Analyses
 
-# 4. Method 
+<div class="superbigimage">
+```{r, fig.width= 15, fig.height=3}
+mondayMidnight <- 
+  EMS_Call.panel %>%
+  mutate(mondayMidnight = ifelse(wday(interval60) == 2 & hour(interval60) == 1,
+                                 as.POSIXct(interval60),0)) %>%
+  filter(mondayMidnight != 0) 
 
-## 4.1 Building Model 
+  rbind(
+    mutate(EMS_Call.Train, label = "Training"), 
+    mutate(EMS_Call.Test, label = "Testing")) %>%
+      group_by(label, interval60) %>% 
+        summarize(Call_Count = sum(Call_Count)) %>%
+        ggplot(aes(interval60, Call_Count, colour = label)) + 
+          geom_line() +
+          ylim(0,20) +
+          labs(title="EMS calls in Virginia Beach by week: June through August, 2018",
+               subtitle="Monday demarked in black", x="Day", y="Call Counts") +
+          plotTheme() + theme(panel.grid.major = element_blank()) +   
+          scale_colour_manual(values = palette2) +
+            geom_vline(data = mondayMidnight, aes(xintercept = mondayMidnight), colour="black")
+```
+</div>
 
-## 4.2 Validation 
+# 4. Modeling
+In this project, we used the zero-inflated Poisson model for several reasons. First, we used Poisson model instead of the Ordinary Least Square model since we aimed to predict the count of EMS calls. In addition, EMS calls are relatively rare, meaning the distribution of our data is rather similar to the Poisson distribution instead of a normal distribution. 
+[the plot of the distribution of our ems call data][the plot of a normal distribution] [the plot of a Poisson distribution]
+We used the zero-inflated Poisson model since there is an excess amount of zeros in our EMS call data. The model assumes that the excess zeros and the counts are generated by two independent processes (citation needed: https://stats.idre.ucla.edu/r/dae/zip/). Here, we believed that the zero EMS calls in south Virginia Beach were determined by different factors from the higher number of calls in north Virginia Beach. 
+```{r}
+EMS_Call.panel
+```
 
-# 5. Results 
+```{r, fig.width=10}
+as.data.frame(EMS_Call.panel) %>%
+  group_by(uniqueID) %>% 
+  summarize(Call_Count = sum(Call_Count)) %>%
+ggplot(aes(Call_Count)) + 
+  geom_histogram(binwidth = 1) +
+  labs(title = "Distribution of EMS Calls by grid cell")
+```
 
-## 5.1 Model Outcome
+Although we gathered and wrangled a variety of different datasets, we only used the hour of day, the neighborhood, the count of calls during the previous hour, the count of calls during the previous 12 hours, and the number of car accidents within the grid cells as our predictors. We chose these predictors by putting our independent variables into the model and examined how the model responded. We did not use variables that led to no difference in the error. 
 
-## 5.2 Accuracy vs. Generalizability
+```{r}
+regression1 <- 
+  zeroinfl(Call_Count ~ hour(interval60) + name + lagHour + lag12Hours + countAccident | 1, data = EMS_Call.Train)
 
-## 5.3 Additional Maps & Data Visualization
+EMS_Call.Test.weekNest <- 
+  EMS_Call.Test %>%
+  nest(-week)
+
+model_pred <- function(dat, fit){
+   pred <- predict(fit, newdata = dat)}
+
+week_predictions <- 
+  EMS_Call.Test.weekNest %>% 
+    mutate(Zero_inflated_poisson = map(.x = data, fit = regression1, .f = model_pred))
+```
+
+# 5. Validation 
+To assess the accuracy of our model, we looked at the mean absolute error of our model per hour per grid for each week. To interpret this number, we also calculated the number of EMS calls per hour per grid on average to compare these numbers at the same scale. 
+```{r}
+week_predictions <-
+  week_predictions %>% 
+    gather(Regression, Prediction, -data, -week) %>%
+    mutate(Observed = map(data, pull, Call_Count),
+           Absolute_Error = map2(Observed, Prediction,  ~ abs(.x - .y)),
+           MAE = map_dbl(Absolute_Error, mean),
+           sd_AE = map_dbl(Absolute_Error, sd))
+
+week_predictions
+```
+
+``` {r}
+EMS_Call.Test.weekNest %>%
+  mutate(Call_Count = map(data, pull, Call_Count),
+         Mean_Call_Count = map_dbl(Call_Count, mean))
+```
+Doing cross-validation for a time/space prediction model is out of scope for this project. Here, we decided to validate our model using three methods. First, we held out a different sets of weeks from our original dataset to train our model and tested the model on remaining weeks. The results allowed us to assess how our model generalized to new data. 
+Second, we examined the temporal and spatial distribution of our error through mapping them across space and time.
+
+```{r, fig.width=15}
+week_predictions %>% 
+    mutate(interval60 = map(data, pull, interval60),
+           uniqueID = map(data, pull, uniqueID)) %>%
+    dplyr::select(interval60, uniqueID, Observed, Prediction, Regression) %>%
+    unnest() %>%
+    gather(Variable, Value, -Regression, -interval60, -uniqueID) %>%
+    group_by(Regression, Variable, interval60) %>%
+    summarize(Value = mean(Value)) %>%
+    ggplot(aes(interval60, Value, colour=Variable)) + 
+      geom_line(size = 1.1) + 
+      facet_wrap(~Regression, ncol=1) +
+      scale_colour_manual(values = palette2) +
+      labs(title = "Mean Predicted/Observed EMS Calls by hourly interval", 
+           subtitle = "Virginia Beach; A test set of 3 weeks in December", x = "Hour", y= "EMS Calls") +
+      plotTheme()
+```
+
+```{r}
+filter(week_predictions, Regression == "Zero_inflated_poisson") %>% 
+  unnest() %>% 
+  st_sf() %>%
+  dplyr::select(uniqueID, Absolute_Error, geometry) %>%
+  gather(Variable, Value, -uniqueID, -geometry) %>%
+    group_by(Variable, uniqueID) %>%
+    summarize(MAE = mean(Value)) %>%
+    ggplot() + 
+      geom_sf(aes(fill = MAE)) +
+      scale_fill_viridis() +
+      labs(title="Mean Absolute Error by grid") +
+      mapTheme() + theme(legend.position="bottom")
+```
+
+```{r, fig.width=15}
+filter(week_predictions, Regression == "Zero_inflated_poisson") %>% 
+  unnest() %>% 
+  st_sf() %>%
+  dplyr::select(uniqueID, Absolute_Error, geometry, interval60) %>%
+  gather(Variable, Value, -interval60, -uniqueID, -geometry) %>%
+  filter(wday(interval60, label = TRUE) == "Mon" & week(interval60) == 28) %>%
+    group_by(hour = hour(interval60), uniqueID) %>%
+      summarize(MAE = mean(Value)) %>%
+      ggplot() + 
+        geom_sf(aes(fill = MAE)) +
+        facet_wrap(~hour, ncol = 8) +
+        scale_fill_viridis() +
+        labs(title="Mean absolute call count error by grid and hour",
+             subtitle = "For the Monday of Week 28") +
+        mapTheme() + theme(legend.position="bottom")
+```
+Finally, we examined the distribution of error across income groups to determine if our model generalized well to different demographic groups. 
+
+
 
 # 6. Conclusion
 
