@@ -83,22 +83,10 @@ plotTheme <- function(base_size = 12) {
   )
 }
 
-palette5 <- c("#eff3ff","#bdd7e7","#6baed6","#3182bd","#08519c")
+palette5 <- c('#fff6f7', '#ffcfca', '#ffa59c', '#ff746e', '#ff263d')
 palette4 <- c("#D2FBD4","#92BCAB","#527D82","#123F5A")
-palette3 <- c("#6baed6","#3182bd","#08519c")
+palette3 <- c('#fff6f7','#ffa59c','#ff263d')
 palette2 <- c("#6baed6","#08519c")
-
-qBr <- function(df, variable, rnd) {
-  if (missing(rnd)) {
-    as.character(quantile(round(df[[variable]],0),
-                          c(.01,.2,.4,.6,.8), na.rm=T))
-  } else if (rnd == FALSE | rnd == F) {
-    as.character(formatC(quantile(df[[variable]]), digits = 3),
-                          c(.01,.2,.4,.6,.8), na.rm=T)
-  }
-}
-
-q5 <- function(variable) {as.factor(ntile(variable, 5))}
 ```
 
 # 1. Introduction 
@@ -292,6 +280,50 @@ EMS_Call.Test <- filter(EMS_Call.panel, week >= 28)
 
 # 3. Exploratory Analyses
 
+In this section, we will further explore our EMS call dataset and potential predictors. Specifically, we will look at the distribution of EMS calls among fixed effect variables and plot the correlations between calls and continuous variables.  
+
+```{r}
+week26 <-
+  EMS_fishnet %>%
+  filter(week == 26 & dotw == "Mon")
+
+week26.panel <-
+   expand.grid(interval60 = seq(floor_date(ymd_hms(min(week26$call_date_and_time)), unit = "hour"),floor_date(ymd_hms(max(week26$call_date_and_time)), unit = "hour"), by = '60 mins'), 
+              uniqueID = unique(fishnet$uniqueID)) 
+
+EMS_Call.animation.data <-
+  week26 %>%
+    mutate(Call_Counter = 1) %>%
+    right_join(week26.panel) %>% 
+    group_by(interval60, uniqueID) %>%
+    summarize(Call_Count = sum(Call_Counter, na.rm=T)) %>% 
+    left_join(fishnet,by=c("uniqueID")) %>%
+    st_sf() %>%
+    mutate(Calls = case_when(Call_Count == 0 ~ "0 calls",
+                             Call_Count > 0 & Call_Count <= 1 ~ "1 call",
+                             Call_Count > 1 & Call_Count <= 3 ~ "2-3 calls",
+                             Call_Count > 3 & Call_Count <= 5 ~ "4-5 calls",
+                             Call_Count > 5 ~ "5+ calls")) %>%
+           mutate(Calls  = factor(Calls, levels=c("0 calls","1 call","2-3 calls","4-5 calls","5+ calls")))
+```
+
+```{r}
+EMS_Call_animation <-
+  ggplot() +
+  geom_sf(data=EMS_Call.animation.data, aes(fill=Calls)) +
+  scale_fill_manual(values = palette3) +
+  labs(title = "EMS Calls for one day in June 2018, Virginia Beach",
+       subtitle = "60 minute intervals: {current_frame}") +
+  transition_manual(interval60) +
+  mapTheme()
+
+animate(EMS_Call_animation, duration=24)
+```
+
+## 3.1 Call count variation across time
+We visualized the EMS call counts by hours of the day through the 9 weeks in time series plot. The black lines separate the plot into weeks. The testing and training data are differentiated by colors. 
+Since EMS call is rare and usually caused by accidental events, the data distribution does not have a very clear pattern. According to the timeline, the differences between peak and valley are significantly large, which further indicates the occasion of EMS calls. Though there are many noises associated with the line, one can still observe that each peak represents a day, and the daytime usually has more calls. Except the week 2, the extremely high peak usually happens to a day or a few days of the week. Only in week two, the peaks are almost at the same level. 
+
 <div class="superbigimage">
 ```{r, fig.width= 15, fig.height=3}
 mondayMidnight <- 
@@ -316,8 +348,24 @@ mondayMidnight <-
 ```
 </div>
 
+Next, we aggregated EMS call counts by hours across days of the week and visualized it by hotspot matrix. The matrix indicates that fewer calls are made during the early morning before 6 A.M. The call counts start to increase from 7 A.M. and reach the rush hours at 10 A.M.  to 11 A.M. Then the call counts keep decreasing until midnight. Money, Tuesday and Thursday have around 80 calls during the rush hours, and especially for Monday and Tuesday, the general call counts are larger than that of other days. The rest of four days still follow the general daily pattern, but do not have any extremely high or low counts. 
+[call count hotspot by week of the day]
+We visualized the correlations between EMS call counts and time lags. The absolute values of correlations are around 0.4 to 0.5 except for the 4-hour lag. In fact, for the first four hours, despite the minor fluctuation between the 2-hour lag and the 3-hour lag,  the value of the correlation dropped from 0.45 to 0.19. The significant reduction also shows a decreasing tendency of the correlation with additional hours. The correlations are stronger again in 12-hour lag and 1-day lag. The 12-hour lag is the only lag with a negative correlation, and we believe it corresponds to the pattern that is displayed in the time series plot: the daytime and nighttime have opposite call count patterns. 
+[correlation of time lag]
+
+## 3.2 Call count variation across space
+We then explored the spatial pattern of EMS call counts across the Virginia Beach. We visualized the call counts of each grid cell to see whether there are any spatial autocorrelations or specific patterns that may potentially affect our prediction. Since the hour is the time interval of our prediction, we made the small multiple maps below to show the spatial distribution of the sum of three-month EMS call counts per grid per hour. Generally, the calls take place in northern Virginia Beach. In the early morning, the call counts are at a low level and in an even distribution at the northern Virginia Beach. Until time shifts to the daytime,  the general call counts increase,  but there are still no cell grids with extremely high call counts (Except the 12 P.M.). After 6 P.M., the easternmost grid have significantly high call counts than other grid cells do.  
+[sum of call counts by grid by hour]
+We visualized the aggregated call counts by week through the three months. A large number of call counts form a horizontal line at the northern Virginia Beach, and the call counts gradually outward expand from the line. According to the map, the horizontal line with more call counts is the main road of Virginia Beach, which reflects that the spatial distribution of EMS calls may relate to the road distribution. 
+[sum of call counts by grid by week]
+
+## 3.3 Weather
+## 3.4 Car crashes
+## 3.5 Socioeconomic factors 
+
+
 # 4. Modeling
-In this project, we used the zero-inflated Poisson model for several reasons. First, we used Poisson model instead of the Ordinary Least Square model since we aimed to predict the count of EMS calls. In addition, EMS calls are relatively rare, meaning the distribution of our data is rather similar to the Poisson distribution instead of a normal distribution. 
+In this project, we used the zero-inflated Poisson model for several reasons. First, we used a Poisson model instead of the Ordinary Least Square model since we aimed to predict the count of EMS calls. In addition, EMS calls are relatively rare, meaning the distribution of our data is rather similar to the Poisson distribution instead of a normal distribution. 
 [the plot of the distribution of our ems call data][the plot of a normal distribution] [the plot of a Poisson distribution]
 We used the zero-inflated Poisson model since there is an excess amount of zeros in our EMS call data. The model assumes that the excess zeros and the counts are generated by two independent processes (citation needed: https://stats.idre.ucla.edu/r/dae/zip/). Here, we believed that the zero EMS calls in south Virginia Beach were determined by different factors from the higher number of calls in north Virginia Beach. 
 
@@ -425,5 +473,9 @@ Finally, we examined the distribution of error across income groups to determine
 
 
 # 6. Conclusion
+
+In this project, we built a model to predict the count of EMS calls in Virginia Beach per 5000 ft grid cell per hour. There were two challenges that we tried to deal with. First, EMS calls were rare events and most of the grid cells had zero calls at most of the time intervals. Second, since emergencies can often be pure accidents, our EMS call data contains a lot of noise and does not show a very strong pattern in terms of time and space. To deal with these two challenges, we used a zero-inflated Poisson model and explored a variety of potential predictors including the number of accidents, demographic characteristics, and neighborhoods. Our analysis resulted in a model with reasonable accuracy and generalizability. <br />
+Through creating an app based on our model, we aimed to better inform ambulance drivers through identifying grid cells with a higher number of calls predicted. The app would enable them to stay around high-risk zones in advance instead of waiting to be dispatched at the rescue stations. As discussed in the validation section, our model has successfully captured the trend within EMS calls. However, it wasn’t as successful in predicting the exact number of calls. Thus, we do not recommend our users make decisions based on the exact number of calls predicted but instead encourage them to interpret our predictions in a relative way. Essentially, a higher number of calls in our predictions indicates a higher risk of EMS calls while a lower number of calls predicted indicates a lower risk of EMS calls. <br />
+We can improve this model in several different ways. For this model, we did not put in spatial lag due to the limit of time. However, there is a high possibility that there is spatial autocorrelation among the number of call counts. In addition, we discovered that the relationships between a number of EMS calls and predictors drastically change spatially in the city of Virginia Beach. Most of the cells in southern Virginia Beach did not get one single EMS call in our 9 weeks of data. As a result, we believe ensemble modeling may drastically improve our predictions since different models can be used to predict different parts of the relationships.  Second, the pattern within EMS calls has been difficult to capture. And we believe the time span of interest may be much longer than 9 weeks. In order to create a better model, we need to include data with a longer time frame, for example, six months or even a whole year. Finally, instead of predicting the number of calls per hour per grid cell, we can change the time unit of our predictions to a larger time interval. For example, using the number of calls per 3 hours per grid cell may lead to better performance of the model. However, we do think there will be a possible tradeoff between the accuracy and applicability of the results. 
 
 
