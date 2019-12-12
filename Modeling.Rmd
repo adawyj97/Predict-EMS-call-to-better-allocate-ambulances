@@ -195,6 +195,24 @@ filter(week_predictions, Regression == "A_Time_FE") %>%
 filter(week_predictions, Regression == "A_Time_FE") %>% 
   unnest() %>% 
   st_sf() %>%
+  dplyr::select(uniqueID, Prediction, geometry, interval60) %>%
+  gather(Variable, Value, -interval60, -uniqueID, -geometry) %>%
+  filter(wday(interval60, label = TRUE) == "Mon" & week(interval60) == 28) %>%
+    group_by(hour = hour(interval60), uniqueID) %>%
+      summarize(Prediction = mean(Value)) %>%
+      ggplot() + 
+        geom_sf(aes(fill = Prediction)) +
+        facet_wrap(~hour, ncol = 8) +
+        scale_fill_viridis() +
+        labs(title="Mean absolute call count error by tract and hour",
+             subtitle = "For the Monday of Week 28") +
+        mapTheme() + theme(legend.position="bottom")
+```
+
+```{r}
+filter(week_predictions, Regression == "A_Time_FE") %>% 
+  unnest() %>% 
+  st_sf() %>%
   dplyr::select(uniqueID, Absolute_Error, geometry, interval60) %>%
   gather(Variable, Value, -interval60, -uniqueID, -geometry) %>%
   filter(wday(interval60, label = TRUE) == "Mon" & week(interval60) == 28) %>%

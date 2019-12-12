@@ -402,23 +402,6 @@ filter(week_predictions, Regression == "Zero_inflated_poisson") %>%
       labs(title="Mean Absolute Error by grid") +
       mapTheme() + theme(legend.position="bottom")
 ```
-```{r}
-filter(week_predictions, Regression == "Zero_inflated_poisson") %>% 
-  unnest() %>% 
-  st_sf() %>%
-  dplyr::select(uniqueID, Observed, geometry, interval60) %>%
-  gather(Variable, Value, -interval60, -uniqueID, -geometry) %>%
-  filter(wday(interval60, label = TRUE) == "Mon" & week(interval60) == 28) %>%
-    group_by(hour = hour(interval60), uniqueID) %>%
-      summarize(Observed = mean(Value)) %>%
-      ggplot() + 
-        geom_sf(aes(fill = Observed)) +
-        facet_wrap(~hour, ncol = 8) +
-        scale_fill_viridis() +
-        labs(title="Mean absolute call count error by grid and hour",
-             subtitle = "For the Monday of Week 28") +
-        mapTheme() + theme(legend.position="bottom")
-```
 
 ```{r, fig.width=15}
 filter(week_predictions, Regression == "Zero_inflated_poisson") %>% 
