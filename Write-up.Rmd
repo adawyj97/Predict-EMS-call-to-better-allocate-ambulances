@@ -28,6 +28,7 @@ knitr::opts_chunk$set(echo = TRUE, results=TRUE, echo=TRUE, message = FALSE,
 ```
 
 ```{r import libs}
+library(kableExtra)
 library(pscl)
 library(tidyr)
 library(tidyverse)
@@ -469,8 +470,48 @@ filter(week_predictions, Regression == "Zero_inflated_poisson") %>%
         mapTheme() + theme(legend.position="bottom")
 ```
 Finally, we examined the distribution of error across income groups to determine if our model generalized well to different demographic groups. 
+```{r}
+all_prediction <-  EMS_Call.Test %>% 
+  mutate(Prediction = predict(regression1, EMS_Call.Test)) %>% 
+  mutate(Absolute_Error = abs(Prediction - Call_Count))
+```
 
+```{r}
+neighborhood_MAE <- all_prediction %>%
+  st_set_geometry(NULL) %>%
+  group_by(name) %>%
+  summarise(MAE = mean(Absolute_Error)) 
+```
 
+```{r}
+Neighborhoods %>%
+  left_join(neighborhood_MAE, by = c('name')) %>% 
+  ggplot() + geom_sf(aes(fill = MAE)) +
+  scale_fill_viridis() +
+      labs(title="Mean Absolute Error by Neighborhood")
+```
+
+```{r}
+Prediction_race <- all_prediction %>% 
+  mutate(raceContext = ifelse(Percent_White > .5, "Majority White", "Majority Non-white"))
+```
+
+```{r}
+Prediction_race %>%
+  st_set_geometry(NULL) %>%
+  group_by(GEOID, raceContext) %>% 
+  summarize(MAE = mean(Absolute_Error)) %>%
+  group_by(raceContext) %>% 
+  summarize(MAE = mean(MAE)) %>%
+  kable(caption = "Mean Absolute Error of Test set by Race Context") %>%
+    kable_styling("striped", full_width = F) %>%
+    row_spec(1, color = "black", background = "#25CB10") %>%
+    row_spec(2, color = "black", background = "#FA7800") 
+```
+
+```{r}
+
+```
 
 # 6. Conclusion
 
