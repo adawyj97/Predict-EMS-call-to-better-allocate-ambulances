@@ -306,8 +306,6 @@ correlation.lag <-
   plotData.lag %>%
   group_by(Variable) %>%  
   summarize(correlation = round(cor(Value, Call_Count),2))
-  
-correlation.lag
 ```
 
 ```{r}

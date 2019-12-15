@@ -6,7 +6,7 @@ output:
   html_document:
     code_folding: hide
     toc: true
-    toc_depth: 2
+    toc_depth: 3
     toc_float: true
     theme: spacelab
 ---
@@ -91,17 +91,18 @@ palette2 <- c("#6baed6","#08519c")
 ```
 
 # 1. Introduction 
-In the emergency medical service (EMS) system, the time of responding to the call is always crucial for saving people’s lives. In Virginia Beach, there are 22 volunteer rescue squads, but more than 10% of EMS calls have been delayed in each year. Though the control center sends the closest ambulance to the scene, the unpredicted locations of calls still make the ambulance driver spend a long time on the way. According to the annual report of Virginia Beach EMS, from receiving calls to arriving at the scene, the drivers' average response time was more than 9 minutes, and the responding time increased between 2017 and 2018. Based on the above situation, our project aims to minimize the time from driver notified to arriving at the scene. 
-In addition, we would like to increase the transparency and efficiency of the EMS dispatch system by empowering the ambulance drivers to have more decision-making power. For our use case, the driver would have a general sense of the current call pattern around the city by checking our predicted risk map at 1-hour time interval. Instead of staying at the dispatch center to wait for the call, he or she can stay around the high risk location in advance. Our multi-driver communication system also allows the driver to be aware of the general locations of other drivers.
+In the emergency medical service (EMS) system, the time of responding to the call is always crucial for saving people’s lives. In Virginia Beach, there are 22 volunteer rescue squads, but more than 10% of EMS calls have been delayed in each year. Though the control center sends the closest ambulance to the scene, the unpredicted locations of calls still make the ambulance driver spend a long time on the way. According to the annual report of Virginia Beach EMS, from receiving calls to arriving at the scene, the drivers’ average response time was more than 9 minutes, and the responding time increased between 2017 and 2018. Based on the above situation, our project aims to minimize the time it takes for a driver to arrive at the scene after being notified.  <br />
+ <br />
+In addition, we would like to increase the transparency and efficiency of the EMS dispatch system by empowering the ambulance drivers to have more decision-making power. For our use case, the driver would have a general sense of the current call pattern around the city by checking our predicted risk map at a 1-hour time interval. Instead of staying at the dispatch center to wait for the call, he or she can stay around the high-risk location in advance. Our multi-driver communication system also allows the driver to be aware of the general locations of other drivers.
 
 # 2. Data 
-We gathered data from multiple sources to explore the potential relationships between the number of EMS calls and other features. The predictors included the different types of time lag, demographic features, spatial characteristics, and other relevant external characteristics of Virginia Beach. The main dataset was the Virginia Beach EMS calls from 2010 to 2018, which was acquired from the Virginia Beach Open data portal. The other supplement datasets were from Tidy Census, Iowa Environment Mesonet, Virginia Road and Esri Open Data. 
+We gathered data from multiple sources to explore the potential relationships between the number of EMS calls and other features. The predictors included different types of time lag, demographic features, spatial characteristics, and other relevant external characteristics of Virginia Beach. The main dataset was the Virginia Beach EMS calls between 2010 and 2018, which was acquired from the Virginia Beach Open data portal. Other supplement datasets were from the Tidy Census, Iowa Environment Mesonet, Virginia Road and Esri Open Data.
 
 ## 2.1 Feature Engineering
-To utilize the gathered datasets in our model, we did feature engineering and transformed the data into different formats. Below is an introduction of the data processing and the logic behind it. 
+To utilize the gathered datasets in our model, we did feature engineering and transformed the data into different formats. Below is an introduction to the data processing and the logic behind it. 
 
 ### EMS Call Data
-We imported EMS call data from 2010 to 2018 in Virginia Beach. In our project, we used the data of June, July, and August in 2017 as training and testing data. We standardized the call times to hours and stored the data in the column interval60 in the dataset. In terms of spatial unit,  we created a fishnet grid using the boundary of the city and excluded the water bodies. Finally, we aggregated call counts in each grid cell by the hour, and stored the data in a new column Call_Count. Therefore, each row in our final time/space panel refers to the number of EMS calls by grid cell per hour in each day of the week. 
+We imported EMS call data from 2010 to 2018 in Virginia Beach. In our project, we used the data of June, July, and August in 2017 as training and testing data. We standardized the call times to hours and stored the data in the column interval60 in the dataset. In terms of spatial unit,  we created a fishnet grid using the boundary of the city and excluded the water bodies. Finally, we aggregated call counts in each grid cell by the hour and stored the data in a new column Call_Count. Therefore, each row in our final time/space panel refers to the number of EMS calls by grid cell per hour in each day of the week. 
 
 ```{r, results="hide"}
 EMS_Calls <- st_read('C:\\Users\\Sarah\\Documents\\MUSA_507_Public_Policy_Analytics\\Predict-EMS-call-to-better-allocate-ambulances\\EMS_calls1.geojson') %>%
@@ -135,8 +136,8 @@ ggplot() +
   labs(title = "Fishnet of grid size 5000 ft")
 ```
 
-### Demographic
-Census level data were downloaded. The data included socioeconomic and demographic features of Virginia Beach. Firstly, the population size in each grid cell directly affects the possibility of making calls, and people’s likelihood of making EMS calls may relate to racial factors. We had a total population and percentage of the white population to represent the above two factors. Then, related research indicated that the aging population and single males were more likely to make EMS calls. Therefore we used the total households with 65-years old and over as our data for the aged population, and sum up the number of males in the marital status of never married, spouse absent, widowed, and divorced as the predictor of single male. We assumed the income level is another decisive factor on whether to make EMS calls, and the median household income was added. In addition, people who took public transit to work may not have car ownership or live in congested areas, so this group tends to have a higher likelihood of making EMS calls. 
+### Demographic Characteristics
+We downloaded census data at the tract level which included socioeconomic and demographic features of Virginia Beach. We believe the number of EMS calls is associated with these features. For example, we looked at the total population since the population size in each grid cell directly affects the number of calls. Related research indicated that the aged population and single males were more likely to make EMS calls. Therefore, we used the total households with people 65-years old and over to represent the aged population. We also summed up the number of males in the marital status of never married, spouse absent, widowed, and divorced. We assumed the income level is another decisive factor on whether one makes an EMS call in case of an emergency and added the median household income. Finally, people who took public transit to work may not have car ownership or live in congested areas, so this group tends to have a higher likelihood of making EMS calls. 
 
 ```{r, results='hide'}
 vbCensus <- 
@@ -173,7 +174,7 @@ census_fishnet_wide <-
 ```
 
 ### Spatial Characteristics
-Neighborhoods and census tracts were spatial characteristics in our prediction. Since cell grids belonged to neighbor geographical units might have similar call pattern, we joined those two characteristics to the fishnet grids. The GEOID refers to the census tracts and NAME represents the name of the neighborhood. 
+Neighborhoods and census tracts were spatial characteristics in our prediction. Since grids within the same neighbor or census tract might have similar call pattern, we joined those two spatial features to the fishnet grids. The GEOID refers to the census tracts and NAME refers to the neighborhood. 
 
 ```{r, results='hide'}
 Neighborhoods <- st_read('https://data.opendatasoft.com/explore/dataset/zillow-neighborhoods@public/download/?format=geojson&refine.state=VA&refine.county=Virginia+Beach+City&timezone=America/New_York')  %>%
@@ -192,12 +193,26 @@ for (i in 1: nrow(fishnet)) {
 }
 ```
 
+```{r, fig.width=8}
+grid.arrange(
+  ggplot() + 
+    geom_sf(data = Neighborhoods) +
+    mapTheme() +
+    labs(title = "Neighborhoods in Virginia Beach"),
+    ggplot() + 
+    geom_sf(data = vbCensus) +
+    mapTheme() +
+    labs(title = "Census tracts in Virginia Beach"),
+  ncol = 2
+)
+```
+
 ### Other 
-EMS call was an occasional event with high rareness. Sometimes the special outside factors or accidents might directly generate EMS calls or affect the aggregated number of calls. For example, in beach city high-temperature summer days, the high volume of tourists might lead to more drowning or sunstroke. Thus, we added weather conditions as predictor, which include high temperature, wind speed, and precipitation. Besides that, we found that car crash was one of the major reasons for making EMS calls, so we aggregated the number of severe car accidents in 2017 into each grid cell. 
+There are other features that might affect the number of EMS calls in an area. In beach cities such as Virginia Beach, the high volume of tourists in high-temperature summer days might suffer from drowning or sunstroke events. Thus, we added weather conditions including high temperature, wind speed, and precipitation as predictors. Besides, we found that car crashes were one of the major causes of EMS calls and aggregated the number of severe car accidents in 2017 into each grid cell.
 
 ```{r,  results='hide'}
 weather.Data <- 
-  riem_measures(station = "NTU", date_start = "2017-01-01", date_end = "2018-01-01")
+  riem_measures(station = "NTU", date_start = "2017-05-15", date_end = "2017-09-15")
 
 weather.Panel <-  
   weather.Data %>%
@@ -207,7 +222,7 @@ weather.Panel <-
            dotw = wday(interval60, label=TRUE)) %>%
     group_by(interval60) %>%
     summarize(Temperature = max(tmpf),
-              Percipitation = sum(p01i),
+              Precipitation = sum(p01i),
               Wind_Speed = max(sknt)) %>%
     mutate(Temperature = ifelse(Temperature == 0, 42, Temperature))
 
@@ -225,9 +240,26 @@ accident_net <-
 fishnet <- fishnet %>%
   merge(st_set_geometry(accident_net, NULL), by = 'uniqueID')
 ```
+```{r}
+fishnet %>%
+  ggplot() + geom_sf(aes(fill = countAccident)) +
+  mapTheme() +
+    labs(title = "Count of accidents per grid in Virgina Beach")
+  
+```
+```{r}
+grid.arrange(
+  ggplot(weather.Panel, aes(interval60,Precipitation)) + geom_line() + 
+  labs(title="Precipitation", x="Hour", y="Precipitation") + plotTheme(),
+  ggplot(weather.Panel, aes(interval60,Wind_Speed)) + geom_line() + 
+    labs(title="Wind Speed", x="Hour", y="Wind Speed") + plotTheme(),
+  ggplot(weather.Panel, aes(interval60,Temperature)) + geom_line() + 
+    labs(title="Temperature", x="Hour", y="Temperature") + plotTheme(),
+  top="Weather Data - Virginia Beach - June, July, August,& September, 2017")
+```
 
 ### Final Space/time Panel
-The dataset for doing spate/time analysis must be in a panel format, which means the dataset must include all possible combinations of space and time in each cell grid. EMS_Call.panel was our final study panel, which included the total combination of 24 hours a day * 7 days a week * 9 weeks *343 grid cells, and the total number of combinations in the panel was 518616. 
+The dataset for space/time analysis must be in a panel format, which means the dataset must include all possible combinations of space and time in each grid cell. EMS_Call.panel was our final study panel, which included the combination of 24 hours a day * 7 days a week * 9 weeks a * 343 grid cells, and the total number of combinations in the panel was 518616.  
 
 ```{r, results='hide'}
 EMS_fishnet <-
@@ -258,8 +290,8 @@ EMS_Call.panel <-
             st_sf()
 ```
 
-### Time lag
-We supposed the number of EMS calls at certain time intervals relates to the number of calls during other time intervals around it, so additional feature engineering was done to mine the data for critical time trends. The time lags were created and included time lags by hour from 1 to 4 hours, a half-day time lag, and a one-day time lag. We assigned the aggregated call counts per grid cell to each time lag. 
+### Time Lag
+We supposed the number of EMS calls at certain time intervals relates to the number of calls during other time intervals around it, so additional feature engineering was done to mine the data for critical time trends. The time lags were created and included time lags of 1 to 4 hours, a half-day, and a whole day. 
 
 ```{r}
 EMS_Call.panel <- 
@@ -322,8 +354,9 @@ animate(EMS_Call_animation, duration=24)
 ```
 
 ## 3.1 Call count variation across time
-We visualized the EMS call counts by hours of the day through the 9 weeks in time series plot. The black lines separate the plot into weeks. The testing and training data are differentiated by colors. 
-Since EMS call is rare and usually caused by accidental events, the data distribution does not have a very clear pattern. According to the timeline, the differences between peak and valley are significantly large, which further indicates the occasion of EMS calls. Though there are many noises associated with the line, one can still observe that each peak represents a day, and the daytime usually has more calls. Except the week 2, the extremely high peak usually happens to a day or a few days of the week. Only in week two, the peaks are almost at the same level. 
+We visualized EMS call counts by hours of the day during 9 weeks in a time series plot. The black lines separate the plot into weeks. The testing and training data are differentiated by colors. <br />
+ <br />
+Since EMS calls are rare and usually caused by accidental events, there is not a clear pattern in the distribution of these calls temporally. According to the plot, the differences between peak and valley are significantly large, which further indicates the irregularity of EMS calls. Though there are many noises within the line, one can still observe that roughly one peak occurs everyday, and calls usually take place during the daytime. There are obvious high peaks in the distribution of the calls except in week 2. In week two,  the number of calls stays quite constant. 
 
 <div class="superbigimage">
 ```{r, fig.width= 15, fig.height=3}
@@ -341,7 +374,7 @@ mondayMidnight <-
         ggplot(aes(interval60, Call_Count, colour = label)) + 
           geom_line() +
           ylim(0,20) +
-          labs(title="EMS calls in Virginia Beach by week: June through August, 2018",
+          labs(title="EMS calls in Virginia Beach by week: June through August, 2017",
                subtitle="Monday demarked in black", x="Day", y="Call Counts") +
           plotTheme() + theme(panel.grid.major = element_blank()) +   
           scale_colour_manual(values = palette2) +
@@ -349,26 +382,190 @@ mondayMidnight <-
 ```
 </div>
 
-Next, we aggregated EMS call counts by hours across days of the week and visualized it by hotspot matrix. The matrix indicates that fewer calls are made during the early morning before 6 A.M. The call counts start to increase from 7 A.M. and reach the rush hours at 10 A.M.  to 11 A.M. Then the call counts keep decreasing until midnight. Money, Tuesday and Thursday have around 80 calls during the rush hours, and especially for Monday and Tuesday, the general call counts are larger than that of other days. The rest of four days still follow the general daily pattern, but do not have any extremely high or low counts. 
-[call count hotspot by week of the day]
-We visualized the correlations between EMS call counts and time lags. The absolute values of correlations are around 0.4 to 0.5 except for the 4-hour lag. In fact, for the first four hours, despite the minor fluctuation between the 2-hour lag and the 3-hour lag,  the value of the correlation dropped from 0.45 to 0.19. The significant reduction also shows a decreasing tendency of the correlation with additional hours. The correlations are stronger again in 12-hour lag and 1-day lag. The 12-hour lag is the only lag with a negative correlation, and we believe it corresponds to the pattern that is displayed in the time series plot: the daytime and nighttime have opposite call count patterns. 
-[correlation of time lag]
+Next, we aggregated EMS call counts by the hour for each day of the week and visualized it by a hotspot matrix. The matrix indicates that fewer calls are made during the early morning before 6 A.M. The call counts start to increase from 7 A.M. and reach a peak between10 A.M.  and 11 A.M. Then the call counts keep decreasing until midnight. Money, Tuesday and Thursday have around 80 calls during the rush hours. Especially for Monday and Tuesday, the general call counts are larger than that of other days. The rest days still follow the general daily pattern but do not have any extremely high or low counts.<br />
+```{r}
+EMS_Call.panel$hour <- hour(EMS_Call.panel$interval60)
+EMS_Call.panel %>%
+  group_by(hour, dotw) %>%
+  summarise(
+  Call_Count = sum(Call_Count)) %>%
+ggplot(aes(x=hour, 
+           y=dotw, 
+           fill=Call_Count)) + geom_tile() + scale_fill_gradient(low = "#E4FFFF", high = "#EF200A", name = 'Count of EMS Calls')
+```
+We visualized the correlations between EMS call counts and time lags. The absolute values of correlations are around 0.4 to 0.5 except for the 4-hour lag. In fact, for the first four hours, despite the minor fluctuation between the 2-hour lag and the 3-hour lag,  the value of the correlation dropped from 0.45 to 0.19. The significant reduction also shows that the correlation tends to decrease with additional hours. The correlations are stronger again in 12-hour lag and 1-day lag. The 12-hour lag is the only lag with a negative correlation, and we believe it corresponds to the pattern that is displayed in the time series plot: the daytime and nighttime have opposite call count patterns. 
+```{r}
+plotData.lag <-
+  as.data.frame(EMS_Call.panel) %>%
+  filter(week == 26) %>%
+  group_by(interval60) %>% 
+    summarise_at(vars(starts_with("lag"), "Call_Count"), mean, na.rm = TRUE) %>%
+    gather(Variable, Value, -interval60, -Call_Count) %>%
+    mutate(Variable = factor(Variable, levels=c("lagHour","lag2Hours","lag3Hours","lag4Hours",
+                                                "lag12Hours","lag1day")))
+
+correlation.lag <-
+  plotData.lag %>%
+  group_by(Variable) %>%  
+  summarize(correlation = round(cor(Value, Call_Count),2))
+
+plotData.lag %>%
+  ggplot(aes(Value, Call_Count)) + 
+    geom_point() + geom_smooth(method = "lm", se = F, color = '#78DBFF') + 
+    facet_wrap(~Variable) +
+    geom_text(data=correlation.lag, aes(label=paste("R =", correlation)),colour = "blue", 
+              x=-Inf, y=Inf, hjust=-0.1, vjust=1.2) +
+    labs(title = "EMS call count as a function of time lags", 
+         subtitle= "One week in June, 2017", x = "Lag Call Count") +
+    plotTheme()
+```
 
 ## 3.2 Call count variation across space
-We then explored the spatial pattern of EMS call counts across the Virginia Beach. We visualized the call counts of each grid cell to see whether there are any spatial autocorrelations or specific patterns that may potentially affect our prediction. Since the hour is the time interval of our prediction, we made the small multiple maps below to show the spatial distribution of the sum of three-month EMS call counts per grid per hour. Generally, the calls take place in northern Virginia Beach. In the early morning, the call counts are at a low level and in an even distribution at the northern Virginia Beach. Until time shifts to the daytime,  the general call counts increase,  but there are still no cell grids with extremely high call counts (Except the 12 P.M.). After 6 P.M., the easternmost grid have significantly high call counts than other grid cells do.  
-[sum of call counts by grid by hour]
-We visualized the aggregated call counts by week through the three months. A large number of call counts form a horizontal line at the northern Virginia Beach, and the call counts gradually outward expand from the line. According to the map, the horizontal line with more call counts is the main road of Virginia Beach, which reflects that the spatial distribution of EMS calls may relate to the road distribution. 
-[sum of call counts by grid by week]
+We then explored the spatial pattern of EMS call counts across Virginia Beach. We visualized the call counts of each grid cell to see whether there are any spatial autocorrelations or specific patterns that may potentially affect our prediction. Since the hour is the time interval of our prediction, we made small multiple maps below to show the spatial distribution of the sum of three-month EMS call counts per grid. Generally, the calls take place in North Virginia Beach. In the early morning, the call counts are at a low level and in an even distribution across North Virginia Beach. When time shifts to the daytime,  the general call counts increase with no grids with extremely high call counts (Except the 12 P.M.). After 6 P.M., the easternmost grid has significantly high call counts than other grid cells do.  
+
+```{r, fig.width=25, fig.height=25}
+EMS_Call.panel %>%
+  mutate(hour = hour(interval60)) %>%
+  group_by(hour, uniqueID) %>%
+  summarize(Sum_Call_Count = sum(Call_Count)) %>%
+  ggplot() + geom_sf(aes(fill = Sum_Call_Count)) +
+    facet_wrap(~hour, ncol = 6) +
+    scale_fill_gradient(low = "#E2F2FD", high = "#FF2020", space = "Lab") +
+    labs(title="Sum of EMS calls by hour of the day") +
+    mapTheme() + theme(legend.position = "bottom") 
+```
+We visualized the aggregated call counts by week during the three months. A large number of call counts form a horizontal line at the northern Virginia Beach, and the call counts gradually expand outward from the line. According to the map, the horizontal line with more call counts is the main road of Virginia Beach, which reflects that the spatial distribution of EMS calls may relate to the road distribution. 
+```{r, fig.width=25,fig.height=25}
+EMS_Call.panel %>% 
+  group_by(week, uniqueID) %>%
+  summarize(Sum_Call_Count = sum(Call_Count)) %>%
+  ggplot() + geom_sf(aes(fill = Sum_Call_Count)) +
+    facet_wrap(~week, ncol = 3) +
+    scale_fill_gradient(low = "#E2F2FD", high = "#FF2020", space = "Lab") +
+    labs(title="Sum of EMS calls by week") +
+    mapTheme() + theme(legend.position = "bottom") 
+```
+
 
 ## 3.3 Weather
+
+Virginia Beach is a beach city, and we select three summer months, so we visualized the weather variables. Considering the season and location, we chose the presence/absence of precipitation and over 86 degrees Fahrenheit temperature as weather variables. The bar plots indicate the presence of rainy days and high-temperature days in each week. After week 25, the end of June, the general precipitation in Virginia Beach started to decline. The high temperature first appeared at week 24. The end of June and beginning of July are the hottest within our studied period. 
+```{r, fig.width= 16, fig.height=5}
+grid.arrange(
+  as.data.frame(EMS_Call.panel) %>%
+  group_by(interval60) %>% 
+  summarize(Call_Count = sum(Call_Count)) %>%
+  left_join(weather.Panel) %>%
+  mutate(isPercip = ifelse(Precipitation > 0,"Rain", "None")) %>%
+    group_by(week = week(interval60), isPercip) %>%
+      summarize(Mean_Call_Count = mean(Call_Count)) %>%
+    ggplot(aes(isPercip, Mean_Call_Count)) + 
+      geom_bar(stat = "identity") +
+      facet_wrap(~week,ncol=9) +
+      labs(title="Does EMS Calls vary when it's raining?",
+           subtitle="Mean call count by week; June through August, 2017",
+           x="Precipitation", y="Mean Call Count") +
+      plotTheme() + theme(axis.text.x = element_text(angle = 45, hjust = 1)),
+  as.data.frame(EMS_Call.panel) %>%
+  group_by(interval60) %>% 
+  summarize(Call_Count = sum(Call_Count)) %>%
+  left_join(weather.Panel) %>%
+  mutate(isHot = ifelse(Temperature > 86,"Hot", "None")) %>%
+    group_by(week = week(interval60), isHot) %>%
+      summarize(Mean_Call_Count = mean(Call_Count)) %>%
+    ggplot(aes(isHot, Mean_Call_Count)) + 
+      geom_bar(stat = "identity") +
+      facet_wrap(~week,ncol=9) +
+      labs(title="Does EMS Call vary when it's too hot?",
+           subtitle="Mean call count by week; June through August, 2017",
+           x="Temperature", y="Mean Call Count") +
+      plotTheme() + theme(axis.text.x = element_text(angle = 45, hjust = 1)),
+  ncol = 2
+)
+```
+
+High temperatures may increase the incidence of certain diseases such as sunstroke or cardiovascular diseases. The below plots indicate a higher number of EMS calls tend to occur in weeks with more high-temperature days. High temperatures may increase the incidence of certain diseases such as sunstroke or cardiovascular diseases. The below plots indicate a higher number of EMS calls tend to occur in weeks with more high-temperature days. There seems to be no obvious relationship between the number of calls and precipitation.
+```{r}
+correlation.temperature  <- EMS_Call.panel %>% 
+  group_by(week) %>%  
+  summarize(correlation = round(cor(Temperature, Call_Count),2))
+  
+as.data.frame(EMS_Call.panel) %>%
+  group_by(interval60) %>% 
+  summarize(Call_Count = sum(Call_Count)) %>%
+  left_join(weather.Panel) %>%
+  mutate(week = week(interval60)) %>%
+  ggplot(aes(Temperature, Call_Count)) + 
+    geom_point() + facet_wrap(~week) + geom_smooth(method = "lm", se= FALSE,color = '#78DBFF') +
+    plotTheme() +
+  geom_text(data=correlation.temperature, aes(label=paste("R =", correlation)),colour = "blue", 
+              x=-Inf, y=Inf, hjust=-0.1, vjust=1.2) + 
+  labs(title="Call Count as a fuction of Temperature by week",
+           subtitle="Call count by week; June through August, 2017",
+           x="Temperature", y="Call Trip Count")
+```
+
 ## 3.4 Car crashes
+Severe car crashes are usually associated with serious injuries, leading to EMS calls. Both car accidents and EMS calls are rare events in people’s daily life. We created a scatterplot to visualize the relationship between the total number of car accidents and EMS calls for one week. We noticed a positive correlation between the two. The correlation between EMS call counts and car crashes is 0.49, higher than correlations between EMS calls and other predictors in this model.
+
+```{r}
+correlation.accidents <- 
+  EMS_Call.panel %>%
+  filter(week == 26) %>%
+  group_by(uniqueID) %>% 
+  summarize(Call_Count = sum(Call_Count), countAccident = sum(countAccident)) %>%
+  mutate(correlation = round(cor(countAccident, Call_Count),2))
+
+as.data.frame(EMS_Call.panel) %>%
+  filter(week == 26) %>%
+  group_by(uniqueID) %>% 
+  summarize(Call_Count = sum(Call_Count), countAccident = sum(countAccident)) %>%
+  ggplot(aes(countAccident, Call_Count)) + 
+    geom_point() + geom_smooth(method = "lm", se= FALSE,color = '#78DBFF') +
+    plotTheme() +
+  geom_text(data=correlation.accidents, aes(label=paste("R =", correlation)),colour = "blue", 
+              x=-Inf, y=Inf, hjust=-0.1, vjust=1.2) +
+  plotTheme() +
+  labs(title="One week of EMS Calls as a function of number of accidents")
+
+```
+
 ## 3.5 Socioeconomic factors 
+Below, we explored the correlation between our demographic variables and the number of EMS calls in one week. There is a negative correlation between EMS calls and the median household income. The calls are also negatively correlated with the percent of the white population. There is a positive correlation between EMS calls and the percent of the population taking public transportation. In addition, they are also positively correlated with the number of households with people 65 years old and over. The correlation between the number of calls and the percent of single males is 0.01, indicating a very weak correlation.  
+```{r}
+census_fishnet <- 
+  fishnet[c(1)] %>% 
+  st_join(vbCensus[-c(2,3)], st_intersects, largest=TRUE) %>% 
+  left_join(st_set_geometry(vbCensus, NULL), by=c('GEOID')) %>% 
+  st_set_geometry(NULL)
+
+plotData.census <- 
+  as.data.frame(EMS_Call.panel) %>%
+    filter(week == 26) %>%
+  group_by(uniqueID) %>% 
+  summarize(Call_Count = sum(Call_Count))  %>%
+    left_join(census_fishnet, by=c("uniqueID")) %>%
+    filter(Variable == "Median_Household_Income" | Variable == "Mean_Commute_Time_for_Workers" |
+           Variable == "Percent_Taking_Public_Trans" | Variable == "Percent_White" | Variable == "Percent_Single_Male"| Variable == "Total_Households_with_65yrs_and_Over") 
+
+correlation.census <-
+  plotData.census %>%
+  group_by(Variable) %>%  
+  summarize(correlation = round(cor(Value, Call_Count),2))
+
+ggplot(plotData.census, aes(Value,Call_Count)) + geom_point() + geom_smooth(method="lm", se = F, color = '#78DBFF') +
+  facet_wrap(~Variable, scales="free", ncol=2) +
+  geom_text(data=correlation.census, aes(label=paste("R =", correlation)),
+            colour = "blue", x=-Inf, y=Inf, hjust=-0.1, vjust=1.2) +
+  plotTheme() +
+  labs(title="One week of EMS Calls by Census Tract\nas a function of selected Census variables")
+```
 
 
 # 4. Modeling
-In this project, we used the zero-inflated Poisson model for several reasons. First, we used a Poisson model instead of the Ordinary Least Square model since we aimed to predict the count of EMS calls. In addition, EMS calls are relatively rare, meaning the distribution of our data is rather similar to the Poisson distribution instead of a normal distribution. 
-[the plot of the distribution of our ems call data][the plot of a normal distribution] [the plot of a Poisson distribution]
-We used the zero-inflated Poisson model since there is an excess amount of zeros in our EMS call data. The model assumes that the excess zeros and the counts are generated by two independent processes (citation needed: https://stats.idre.ucla.edu/r/dae/zip/). Here, we believed that the zero EMS calls in south Virginia Beach were determined by different factors from the higher number of calls in north Virginia Beach. 
+In this project, we used the zero-inflated Poisson model for several reasons. First, we used a Poisson model instead of the Ordinary Least Square model since we aimed to predict the count of EMS calls. In addition, EMS calls are relatively rare, meaning the distribution of our data is rather similar to the Poisson distribution instead of a normal distribution. <br />
+ <br />
+We used the zero-inflated Poisson model since there is an excess amount of zeros in our EMS call data. The model assumes that the excess zeros and the counts are generated by two independent processes. Here, we believed that the zero EMS calls in south Virginia Beach were determined by different factors from the higher number of calls in North Virginia Beach. 
 
 ```{r, fig.width=10}
 as.data.frame(EMS_Call.panel) %>%
@@ -398,7 +595,7 @@ week_predictions <-
 ```
 
 # 5. Validation 
-To assess the accuracy of our model, we looked at the mean absolute error of our model per hour per grid for each week. To interpret this number, we also calculated the number of EMS calls per hour per grid on average to compare these numbers at the same scale. 
+To assess the accuracy of our model, we looked at the mean absolute error of our model per hour per grid for each week. To interpret this number, we also calculated the number of EMS calls per hour per grid on average to compare these numbers on the same scale. 
 ```{r}
 week_predictions <-
   week_predictions %>% 
@@ -416,7 +613,36 @@ EMS_Call.Test.weekNest %>%
   mutate(Call_Count = map(data, pull, Call_Count),
          Mean_Call_Count = map_dbl(Call_Count, mean))
 ```
-Doing cross-validation for a time/space prediction model is out of scope for this project. Here, we decided to validate our model using three methods. First, we held out a different sets of weeks from our original dataset to train our model and tested the model on remaining weeks. The results allowed us to assess how our model generalized to new data. 
+Doing cross-validation for a time/space prediction model is out of scope for this project. Here, we decided to validate our model using three methods. First, we held out a different set of weeks from our original dataset to train our model and tested the model on the remaining weeks. Instead of using the first 6 weeks to train the model and test it on the latter 3 weeks, this time we used the first 5 weeks to train the model and tested it on the latter 4 weeks. The results allowed us to assess how our model generalized to new data. 
+```{r}
+EMS_Call.Train1 <- filter(EMS_Call.panel, week < 27)
+EMS_Call.Test1 <- filter(EMS_Call.panel, week >= 27)
+regression2 <- 
+  zeroinfl(Call_Count ~ hour(interval60) + name + lagHour + lag12Hours + countAccident | 1, data = EMS_Call.Train1)
+
+EMS_Call.Test.weekNest1 <- 
+  EMS_Call.Test1 %>%
+  nest(-week)
+
+week_predictions1 <- 
+  EMS_Call.Test.weekNest1 %>% 
+    mutate(Zero_inflated_poisson = map(.x = data, fit = regression2, .f = model_pred))
+```
+
+```{r}
+week_predictions1 <-
+  week_predictions1 %>% 
+    gather(Regression, Prediction, -data, -week) %>%
+    mutate(Observed = map(data, pull, Call_Count),
+           Absolute_Error = map2(Observed, Prediction,  ~ abs(.x - .y)),
+           MAE = map_dbl(Absolute_Error, mean),
+           sd_AE = map_dbl(Absolute_Error, sd))
+
+week_predictions1
+```
+<br />
+The results above show our model has a similar mean and standard deviation of absolute errors when trained on a different set of data. For the scope of this project, we only looked at the model results for one different set of training data. In the future, it is worth training the model on data with a larger time frame and holding out training data that is significantly different from the rest (e.g. data for a specific season). <br />
+ <br />
 Second, we examined the temporal and spatial distribution of our error through mapping them across space and time.
 
 ```{r, fig.width=15}
@@ -436,7 +662,31 @@ week_predictions %>%
            subtitle = "Virginia Beach; A test set of 3 weeks in December", x = "Hour", y= "EMS Calls") +
       plotTheme()
 ```
+<br />
+From the chart above, it is apparent that our model captures the temporal pattern of the EMS calls. The peaks within the observed and predicted calls occur at roughly the same places. The valleys within the observed and predicted calls also occur at roughly the same places. Throughout the time span of our test dataset, the difference between our predicted and observed calls stay relatively consistent, indicating that our model generalizes well temporally. 
+```{r, fig.width=10, fig.height=10}
+all_prediction <-  EMS_Call.Test %>% 
+  mutate(Prediction = predict(regression1, EMS_Call.Test)) %>% 
+  mutate(Absolute_Error = abs(Prediction - Call_Count))
 
+breaks <- hour(hm("00:00", "6:00", "12:00", "18:00", "23:59"))
+labels <- c("Night", "Morning", "Afternoon", "Evening")
+all_prediction$Time_of_day <- cut(x=hour(all_prediction$interval60), breaks = breaks, labels = labels, include.lowest=TRUE)
+
+all_prediction %>% 
+  group_by(uniqueID, Time_of_day) %>% 
+  summarize(MAE = mean(Absolute_Error)) %>%
+   ggplot() + 
+      geom_sf(aes(fill = MAE)) +
+      facet_wrap(~Time_of_day, ncol=2) +
+      scale_fill_gradient(low = "#E2F2FD", high = "#FF2020", space = "Lab") + 
+      #scale_fill_viridis() +
+      labs(title="Mean Absolute Error by grid and time of day") +
+      mapTheme() + theme(legend.position="bottom")
+  
+```
+<br />
+We also looked at the distribution of the model error by the time of the day. Here, we grouped the hours in a day into morning (6:00 - 12:00), afternoon (12:00 - 18:00), evening (18:00 - 23:59) and night (0:00 - 6:00). The above maps indicate the mean absolute error by the grid for each of these time intervals. Overall, our model generalizes well among morning, afternoon, and evening. The MAE is slightly lower during the night than the three other intervals. Spatially, our model predicts better for South Virginia Beach, where there have been in general much fewer calls. The error is quite consistent across grid cells in North Virginia Beach, where most of the EMS calls took place. 
 ```{r}
 filter(week_predictions, Regression == "Zero_inflated_poisson") %>% 
   unnest() %>% 
@@ -447,57 +697,43 @@ filter(week_predictions, Regression == "Zero_inflated_poisson") %>%
     summarize(MAE = mean(Value)) %>%
     ggplot() + 
       geom_sf(aes(fill = MAE)) +
-      scale_fill_viridis() +
+      scale_fill_gradient(low = "#E2F2FD", high = "#FF2020", space = "Lab") + 
       labs(title="Mean Absolute Error by grid") +
       mapTheme() + theme(legend.position="bottom")
 ```
-
-```{r, fig.width=15}
-filter(week_predictions, Regression == "Zero_inflated_poisson") %>% 
-  unnest() %>% 
-  st_sf() %>%
-  dplyr::select(uniqueID, Absolute_Error, geometry, interval60) %>%
-  gather(Variable, Value, -interval60, -uniqueID, -geometry) %>%
-  filter(wday(interval60, label = TRUE) == "Mon" & week(interval60) == 28) %>%
-    group_by(hour = hour(interval60), uniqueID) %>%
-      summarize(MAE = mean(Value)) %>%
-      ggplot() + 
-        geom_sf(aes(fill = MAE)) +
-        facet_wrap(~hour, ncol = 8) +
-        scale_fill_viridis() +
-        labs(title="Mean absolute call count error by grid and hour",
-             subtitle = "For the Monday of Week 28") +
-        mapTheme() + theme(legend.position="bottom")
-```
-Finally, we examined the distribution of error across income groups to determine if our model generalized well to different demographic groups. 
-```{r}
-all_prediction <-  EMS_Call.Test %>% 
-  mutate(Prediction = predict(regression1, EMS_Call.Test)) %>% 
-  mutate(Absolute_Error = abs(Prediction - Call_Count))
-```
-
+<br /> 
+The above graph indicates the mean absolute error by the grid for the whole test dataset. As mentioned before, most of the error occurs in Northern Virginia Beach, where most of the EMS calls have taken place. It reveals that there may be other predictors that differentiate the grid cells with higher call volume. Overall, although our model generalizes well temporally, its generalizability regarding space still needs to be improved. 
+<br /> 
+<br />
+Finally, we examined the distribution of errors across neighborhoods and racial context. Below, the plot reveals our model does not generalize well between neighborhoods in the north and neighborhoods in the south. Similar to what's discussed above, the model generates a larger error for neighborhoods with higher call counts in North Virginia Beach. However, among neighborhoods with a higher number of EMS calls, the error stays relatively constant. 
 ```{r}
 neighborhood_MAE <- all_prediction %>%
   st_set_geometry(NULL) %>%
   group_by(name) %>%
   summarise(MAE = mean(Absolute_Error)) 
-```
 
-```{r}
 Neighborhoods %>%
-  left_join(neighborhood_MAE, by = c('name')) %>% 
+  merge(neighborhood_MAE, by = c('name')) %>% 
   ggplot() + geom_sf(aes(fill = MAE)) +
-  scale_fill_viridis() +
-      labs(title="Mean Absolute Error by Neighborhood")
+  scale_fill_gradient(low = "#E2F2FD", high = "#FF2020", space = "Lab") + 
+  mapTheme() +
+  labs(title="Mean Absolute Error by Neighborhood")
+```
+The plot and the table below show the distribution and the mean absolute error per grid per hour of majority non-white and majority-white tracts. All the majority non-white tracts are located in North Virginia Beach, where more EMS calls occurred. The majority-white tracts are distributed more evenly across the city. There are far more majority-white tracts than majority non-white ones. The mean absolute error of the majority non-white tracts is slightly higher than the majority-white tracts. This shows that the generalizability of the model needs to be improved. This difference may be caused by the difference in performance when our model predicts for cells with higher call counts versus cells with very low call counts. 
+```{r}
+vbCensus_wide[is.na(vbCensus_wide$Percent_White) != TRUE,] %>% 
+  mutate(raceContext = ifelse(Percent_White > .5, "Majority White", "Majority Non-white")) %>% 
+  ggplot() + geom_sf(color = 'white', aes(fill = raceContext)) + 
+  scale_fill_manual(values = palette2) + 
+  mapTheme() + 
+  labs(title="Race Context of Virginia Beach")
 ```
 
 ```{r}
 Prediction_race <- all_prediction %>% 
   mutate(raceContext = ifelse(Percent_White > .5, "Majority White", "Majority Non-white"))
-```
 
-```{r}
-Prediction_race %>%
+Prediction_race[is.na(Prediction_race$GEOID) == FALSE, ] %>%
   st_set_geometry(NULL) %>%
   group_by(GEOID, raceContext) %>% 
   summarize(MAE = mean(Absolute_Error)) %>%
@@ -505,18 +741,16 @@ Prediction_race %>%
   summarize(MAE = mean(MAE)) %>%
   kable(caption = "Mean Absolute Error of Test set by Race Context") %>%
     kable_styling("striped", full_width = F) %>%
-    row_spec(1, color = "black", background = "#25CB10") %>%
-    row_spec(2, color = "black", background = "#FA7800") 
-```
-
-```{r}
-
+    row_spec(1, color = 'white', background = "#E74C3C") %>%
+    row_spec(2, color = "white", background = "#2E86C1") 
 ```
 
 # 6. Conclusion
 
 In this project, we built a model to predict the count of EMS calls in Virginia Beach per 5000 ft grid cell per hour. There were two challenges that we tried to deal with. First, EMS calls were rare events and most of the grid cells had zero calls at most of the time intervals. Second, since emergencies can often be pure accidents, our EMS call data contains a lot of noise and does not show a very strong pattern in terms of time and space. To deal with these two challenges, we used a zero-inflated Poisson model and explored a variety of potential predictors including the number of accidents, demographic characteristics, and neighborhoods. Our analysis resulted in a model with reasonable accuracy and generalizability. <br />
-Through creating an app based on our model, we aimed to better inform ambulance drivers through identifying grid cells with a higher number of calls predicted. The app would enable them to stay around high-risk zones in advance instead of waiting to be dispatched at the rescue stations. As discussed in the validation section, our model has successfully captured the trend within EMS calls. However, it wasn’t as successful in predicting the exact number of calls. Thus, we do not recommend our users make decisions based on the exact number of calls predicted but instead encourage them to interpret our predictions in a relative way. Essentially, a higher number of calls in our predictions indicates a higher risk of EMS calls while a lower number of calls predicted indicates a lower risk of EMS calls. <br />
-We can improve this model in several different ways. For this model, we did not put in spatial lag due to the limit of time. However, there is a high possibility that there is spatial autocorrelation among the number of call counts. In addition, we discovered that the relationships between a number of EMS calls and predictors drastically change spatially in the city of Virginia Beach. Most of the cells in southern Virginia Beach did not get one single EMS call in our 9 weeks of data. As a result, we believe ensemble modeling may drastically improve our predictions since different models can be used to predict different parts of the relationships.  Second, the pattern within EMS calls has been difficult to capture. And we believe the time span of interest may be much longer than 9 weeks. In order to create a better model, we need to include data with a longer time frame, for example, six months or even a whole year. Finally, instead of predicting the number of calls per hour per grid cell, we can change the time unit of our predictions to a larger time interval. For example, using the number of calls per 3 hours per grid cell may lead to better performance of the model. However, we do think there will be a possible tradeoff between the accuracy and applicability of the results. 
+ <br />
+Through creating an app based on our model, we aimed to better inform ambulance drivers through identifying grid cells with a higher number of calls predicted. The app would enable them to stay around high-risk zones in advance instead of waiting to be dispatched at the rescue stations. As discussed in the validation section, our model has successfully captured the trend within EMS calls. However, it wasn’t as successful in predicting the exact number of calls. Thus, we do not recommend our users make decisions based on the exact number of calls predicted but instead encourage them to interpret our predictions in a relative way. Essentially, a higher number of calls in our predictions indicates a higher risk of EMS calls while a lower number of calls predicted indicates a lower risk of EMS calls. In addition, it is important to acknowledge the generalizability of the model needs to be improved in terms of space and demographic context. <br />
+ <br />
+We can improve this model in several different ways. For this model, we did not put in spatial lag due to the limit of time. However, there is a high possibility that there is spatial autocorrelation among the number of call counts. In addition, we discovered that the relationships between the number of EMS calls and predictors drastically change spatially in the city of Virginia Beach. Most of the cells in South Virginia Beach did not get one single EMS call in our 9 weeks of data. As a result, we believe ensemble modeling may drastically improve our predictions since different models can be used to predict different relationships between the calls and the predictors. Second, the pattern within EMS calls has been difficult to capture. And we believe the time span of interest may be much longer than 9 weeks. In order to create a better model, we need to include data with a longer time frame, for example, six months or even a whole year. Finally, instead of predicting the number of calls per hour per grid cell, we can change the time unit of our predictions to a larger time interval. For example, using the number of calls per 3 hours per grid cell may lead to better performance of the model. However, we do think there will be a possible tradeoff between the accuracy and applicability of the results. 
 
 
