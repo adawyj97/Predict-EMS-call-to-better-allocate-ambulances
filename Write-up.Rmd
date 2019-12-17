@@ -432,7 +432,7 @@ EMS_Call.panel %>%
     facet_wrap(~hour, ncol = 6) +
     scale_fill_gradient(low = "#E2F2FD", high = "#FF2020", space = "Lab") +
     labs(title="Sum of EMS calls by hour of the day") +
-    mapTheme() + theme(legend.position = "bottom") 
+    mapTheme() + theme(legend.position = "bottom") + theme(strip.text = element_text(size=20))
 ```
 We visualized the aggregated call counts by week during the three months. A large number of call counts form a horizontal line at the northern Virginia Beach, and the call counts gradually expand outward from the line. According to the map, the horizontal line with more call counts is the main road of Virginia Beach, which reflects that the spatial distribution of EMS calls may relate to the road distribution. 
 ```{r, fig.width=25,fig.height=25}
@@ -443,7 +443,7 @@ EMS_Call.panel %>%
     facet_wrap(~week, ncol = 3) +
     scale_fill_gradient(low = "#E2F2FD", high = "#FF2020", space = "Lab") +
     labs(title="Sum of EMS calls by week") +
-    mapTheme() + theme(legend.position = "bottom") 
+    mapTheme() + theme(legend.position = "bottom") + theme(text = element_text(size=14)) + theme(strip.text = element_text(size=20))
 ```
 
 
@@ -532,7 +532,7 @@ as.data.frame(EMS_Call.panel) %>%
 
 ## 3.5 Socioeconomic factors 
 Below, we explored the correlation between our demographic variables and the number of EMS calls in one week. There is a negative correlation between EMS calls and the median household income. The calls are also negatively correlated with the percent of the white population. There is a positive correlation between EMS calls and the percent of the population taking public transportation. In addition, they are also positively correlated with the number of households with people 65 years old and over. The correlation between the number of calls and the percent of single males is 0.01, indicating a very weak correlation.  
-```{r}
+```{r, fig.width=15, fig.height=10}
 census_fishnet <- 
   fishnet[c(1)] %>% 
   st_join(vbCensus[-c(2,3)], st_intersects, largest=TRUE) %>% 
@@ -557,7 +557,7 @@ ggplot(plotData.census, aes(Value,Call_Count)) + geom_point() + geom_smooth(meth
   facet_wrap(~Variable, scales="free", ncol=2) +
   geom_text(data=correlation.census, aes(label=paste("R =", correlation)),
             colour = "blue", x=-Inf, y=Inf, hjust=-0.1, vjust=1.2) +
-  plotTheme() +
+  plotTheme() + theme(strip.text = element_text(size=20)) + 
   labs(title="One week of EMS Calls by Census Tract\nas a function of selected Census variables")
 ```
 
@@ -595,7 +595,7 @@ week_predictions <-
 ```
 
 # 5. Validation 
-To assess the accuracy of our model, we looked at the mean absolute error of our model per hour per grid for each week. To interpret this number, we also calculated the number of EMS calls per hour per grid on average to compare these numbers on the same scale. 
+To assess the accuracy of our model, we looked at the mean absolute error of our model per hour per grid for each week. To interpret this number, we also calculated the number of EMS calls per hour per grid on average to compare these numbers on the same scale. The MAE are quite similar among the three weeks in our test dataset. OVerall, the mean error for each time/space interval is around 0.02 while the mean call count per week is around 0.01. The result shows that the accuracy of the model still needs to be improved. 
 ```{r}
 week_predictions <-
   week_predictions %>% 
@@ -751,6 +751,11 @@ In this project, we built a model to predict the count of EMS calls in Virginia 
  <br />
 Through creating an app based on our model, we aimed to better inform ambulance drivers through identifying grid cells with a higher number of calls predicted. The app would enable them to stay around high-risk zones in advance instead of waiting to be dispatched at the rescue stations. As discussed in the validation section, our model has successfully captured the trend within EMS calls. However, it wasn’t as successful in predicting the exact number of calls. Thus, we do not recommend our users make decisions based on the exact number of calls predicted but instead encourage them to interpret our predictions in a relative way. Essentially, a higher number of calls in our predictions indicates a higher risk of EMS calls while a lower number of calls predicted indicates a lower risk of EMS calls. In addition, it is important to acknowledge the generalizability of the model needs to be improved in terms of space and demographic context. <br />
  <br />
+```{r, echo=FALSE, out.width = '100%'}
+knitr::include_graphics("app.jpg")
+```
+<br />
 We can improve this model in several different ways. For this model, we did not put in spatial lag due to the limit of time. However, there is a high possibility that there is spatial autocorrelation among the number of call counts. In addition, we discovered that the relationships between the number of EMS calls and predictors drastically change spatially in the city of Virginia Beach. Most of the cells in South Virginia Beach did not get one single EMS call in our 9 weeks of data. As a result, we believe ensemble modeling may drastically improve our predictions since different models can be used to predict different relationships between the calls and the predictors. Second, the pattern within EMS calls has been difficult to capture. And we believe the time span of interest may be much longer than 9 weeks. In order to create a better model, we need to include data with a longer time frame, for example, six months or even a whole year. Finally, instead of predicting the number of calls per hour per grid cell, we can change the time unit of our predictions to a larger time interval. For example, using the number of calls per 3 hours per grid cell may lead to better performance of the model. However, we do think there will be a possible tradeoff between the accuracy and applicability of the results. 
-
+<br /> 
+FInally, if you are interested in learning more about this project, check out https://youtu.be/kBo98GdzNTM for a video presentation of the project. 
 
